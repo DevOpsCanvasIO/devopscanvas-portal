@@ -1,0 +1,3 @@
+apiVersion: v2
+name: devopscanvas-portal
+version: 0.1.1

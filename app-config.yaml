@@ -1,0 +1,9 @@
+app: { title: DevOpsCanvas Portal }
+integrations: { github: [ { host: github.com } ] }
+backend:
+  reading:
+    allow:
+      - host: devopscanvas-control-plane.dev.svc.cluster.local
+      - host: localhost
+scorecards:
+  apiBaseUrl: http://devopscanvas-control-plane.dev.svc.cluster.local:3000

@@ -1,0 +1,2 @@
+image: { repository: ghcr.io/ORG/devopscanvas-portal, tag: latest }
+service: { type: LoadBalancer, port: 80 }
