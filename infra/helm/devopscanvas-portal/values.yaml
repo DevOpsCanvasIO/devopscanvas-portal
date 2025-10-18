@@ -1,12 +1,12 @@
 image:
-  repository: ghcr.io/DevOpsCanvasIO/devopscanvas-portal
-  tag: latest
+  repository: nginx
+  tag: alpine
   pullPolicy: Always
 
 service:
   type: LoadBalancer
-  port: 7007
-  targetPort: 7007
+  port: 80
+  targetPort: 80
 
 ingress:
   enabled: true
