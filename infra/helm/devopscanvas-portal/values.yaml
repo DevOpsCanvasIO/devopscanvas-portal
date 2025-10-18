@@ -1,6 +1,6 @@
 image:
   repository: jtcrump32msu/devopscanvas-portal
-  tag: amd64
+  tag: backstage
   pullPolicy: Always
 
 service:
