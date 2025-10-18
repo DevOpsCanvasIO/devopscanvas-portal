@@ -93,20 +93,7 @@ data:
         <script>
             // Simple health check endpoint simulation
             if (window.location.pathname === '/healthcheck') {
-                document.body.innerHTML = `
-                    <div style="font-family: monospace; padding: 2rem; background: #1a1a1a; color: #00ff00; min-height: 100vh;">
-                        <h2>DevOpsCanvas Portal Health Check</h2>
-                        <pre>{
-  "status": "healthy",
-  "service": "DevOpsCanvas Portal",
-  "timestamp": "${new Date().toISOString()}",
-  "version": "1.0.0",
-  "container_registry": "resolved",
-  "deployment": "argocd + helm",
-  "authentication": "configured"
-}</pre>
-                    </div>
-                `;
+                document.body.innerHTML = '<div style="font-family: monospace; padding: 2rem; background: #1a1a1a; color: #00ff00; min-height: 100vh;"><h2>DevOpsCanvas Portal Health Check</h2><pre>{"status": "healthy", "service": "DevOpsCanvas Portal", "timestamp": "' + new Date().toISOString() + '", "version": "1.0.0", "container_registry": "resolved", "deployment": "argocd + helm", "authentication": "configured"}</pre></div>';
             }
         </script>
     </body>
