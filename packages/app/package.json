@@ -1,33 +1,20 @@
 {
-  "name": "devopscanvas-portal",
-  "version": "2.1.0",
-  "description": "DevOpsCanvas Developer Portal - Backstage Application",
+  "name": "app",
+  "version": "0.0.0",
   "private": true,
-  "engines": {
-    "node": "18 || 20"
+  "bundled": true,
+  "backstage": {
+    "role": "frontend"
   },
   "scripts": {
-    "dev": "concurrently \"yarn start\" \"yarn start-backend\"",
-    "start": "yarn workspace app start",
-    "start-backend": "yarn workspace backend start",
-    "build": "backstage-cli repo build --all",
-    "build-image": "yarn build && yarn build-backend",
-    "build-backend": "yarn workspace backend build",
-    "tsc": "tsc",
-    "clean": "backstage-cli repo clean",
-    "test": "backstage-cli repo test",
-    "lint": "backstage-cli repo lint --since origin/main",
-    "lint:all": "backstage-cli repo lint",
-    "prettier:check": "prettier --check ."
-  },
-  "workspaces": {
-    "packages": [
-      "packages/*"
-    ]
+    "start": "backstage-cli package start",
+    "build": "backstage-cli package build",
+    "clean": "backstage-cli package clean",
+    "test": "backstage-cli package test",
+    "lint": "backstage-cli package lint"
   },
   "dependencies": {
     "@backstage/app-defaults": "^1.4.7",
-    "@backstage/backend-defaults": "^0.2.17",
     "@backstage/catalog-model": "^1.4.5",
     "@backstage/cli": "^0.25.2",
     "@backstage/core-app-api": "^1.11.4",
@@ -55,24 +42,25 @@
     "react": "^18.0.2",
     "react-dom": "^18.0.2",
     "react-router": "^6.3.0",
-    "react-router-dom": "^6.3.0",
-    "express": "^4.18.2",
-    "cors": "^2.8.5",
-    "helmet": "^7.1.0"
+    "react-router-dom": "^6.3.0"
   },
   "devDependencies": {
-    "@backstage/cli": "^0.25.2",
-    "@spotify/prettier-config": "^12.0.0",
-    "concurrently": "^8.0.0",
-    "prettier": "^2.3.2",
-    "typescript": "~5.2.0",
-    "@types/express": "^4.17.21",
-    "@types/cors": "^2.8.17",
-    "@types/node": "^20.10.5",
-    "ts-node": "^10.9.2"
+    "@backstage/test-utils": "^1.4.7",
+    "cross-env": "^7.0.0"
   },
-  "resolutions": {
-    "@types/react": "^18",
-    "@types/react-dom": "^18"
-  }
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "files": [
+    "dist"
+  ]
 }
