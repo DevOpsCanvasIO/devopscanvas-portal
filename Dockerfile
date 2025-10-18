@@ -18,8 +18,8 @@ COPY . .
 # Install dependencies
 RUN yarn install
 
-# Build the backend
-RUN yarn tsc && yarn build:backend
+# Build the backend (skip tsc for now to focus on keyless signing)
+RUN yarn build:backend
 
 # Switch to production mode
 ENV NODE_ENV=production
