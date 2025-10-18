@@ -1,5 +1,4 @@
 import React from 'react';
-import { Button } from '@material-ui/core';
 import {
   EntityApiDefinitionCard,
   EntityConsumedApisCard,
@@ -13,11 +12,9 @@ import {
   EntityLinksCard,
   EntityOrphanWarning,
   EntityProcessingErrorsPanel,
-  EntityProvidedApisCard,
   EntitySwitch,
   EntityTechdocsContent,
   hasCatalogProcessingErrors,
-  hasLinks,
   hasRelationWarnings,
   isComponentType,
   isKind,
@@ -27,17 +24,17 @@ import {
   Direction,
   EntityCatalogGraphCard,
 } from '@backstage/plugin-catalog-graph';
-import {
-  isGithubActionsAvailable,
-  EntityGithubActionsContent,
-} from '@backstage/plugin-github-actions';
+// GitHub Actions plugin not installed - removed for build simplification
+// import {
+//   isGithubActionsAvailable,
+//   EntityGithubActionsContent,
+// } from '@backstage/plugin-github-actions';
 import {
   EntityUserProfileCard,
   EntityGroupProfileCard,
   EntityMembersListCard,
   EntityOwnershipCard,
 } from '@backstage/plugin-org';
-import { EntityTechdocsCard } from '@backstage/plugin-techdocs';
 
 import { Grid } from '@material-ui/core';
 
@@ -100,15 +97,7 @@ const serviceEntityPage = (
     </EntityLayout.Route>
 
     <EntityLayout.Route path="/ci-cd" title="CI/CD">
-      <EntitySwitch>
-        <EntitySwitch.Case if={isGithubActionsAvailable}>
-          <EntityGithubActionsContent />
-        </EntitySwitch.Case>
-
-        <EntitySwitch.Case>
-          <div>No CI/CD available for this entity</div>
-        </EntitySwitch.Case>
-      </EntitySwitch>
+      <div>CI/CD integration coming soon - GitHub Actions plugin not configured</div>
     </EntityLayout.Route>
 
     <EntityLayout.Route path="/api" title="API">
@@ -152,15 +141,7 @@ const websiteEntityPage = (
     </EntityLayout.Route>
 
     <EntityLayout.Route path="/ci-cd" title="CI/CD">
-      <EntitySwitch>
-        <EntitySwitch.Case if={isGithubActionsAvailable}>
-          <EntityGithubActionsContent />
-        </EntitySwitch.Case>
-
-        <EntitySwitch.Case>
-          <div>No CI/CD available for this entity</div>
-        </EntitySwitch.Case>
-      </EntitySwitch>
+      <div>CI/CD integration coming soon - GitHub Actions plugin not configured</div>
     </EntityLayout.Route>
 
     <EntityLayout.Route path="/dependencies" title="Dependencies">
