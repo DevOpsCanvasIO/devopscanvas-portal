@@ -8,7 +8,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: devopscanvasio/devopscanvas-portal
+  IMAGE_NAME: jtcrump32/devopscanvas-portal
 
 jobs:
   test:
@@ -56,6 +56,14 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Debug image information
+        run: |
+          echo "Registry: ${{ env.REGISTRY }}"
+          echo "Image name: ${{ env.IMAGE_NAME }}"
+          echo "Full image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
+          echo "GitHub actor: ${{ github.actor }}"
+          echo "GitHub repository: ${{ github.repository }}"
 
       - name: Extract metadata
         id: meta
