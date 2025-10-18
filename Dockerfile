@@ -6,15 +6,10 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN npm install
+RUN npm install --production
 
 # Copy source code
-COPY packages/ ./packages/
-COPY tsconfig.json ./
-COPY app-config.yaml ./
-
-# Build the backend
-RUN npm run build
+COPY src/ ./src/
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs && \
@@ -31,5 +26,5 @@ EXPOSE 7007
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:7007/healthcheck || exit 1
 
-# Start the backend
+# Start the application
 CMD ["npm", "start"]
