@@ -1,6 +1,6 @@
 image:
   repository: jtcrump32msu/devopscanvas-portal
-  tag: latest
+  tag: amd64
   pullPolicy: Always
 
 service:
