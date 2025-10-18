@@ -1,6 +1,6 @@
 image:
-  repository: nginx
-  tag: alpine
+  repository: ghcr.io/devopscanvasio/devopscanvas-portal
+  tag: latest
   pullPolicy: Always
 
 service:
