@@ -1,6 +1,18 @@
 app:
   title: DevOpsCanvas Developer Portal
   baseUrl: http://localhost:7007
+  branding:
+    theme:
+      light:
+        primaryColor: '#1976d2'
+        headerColor1: '#1976d2'
+        headerColor2: '#1565c0'
+        navigationIndicatorColor: '#1976d2'
+      dark:
+        primaryColor: '#90caf9'
+        headerColor1: '#0d47a1'
+        headerColor2: '#1565c0'
+        navigationIndicatorColor: '#90caf9'
 
 organization:
   name: DevOpsCanvas
@@ -49,20 +61,120 @@ catalog:
     entityFilename: catalog-info.yaml
     pullRequestBranchName: backstage-integration
   rules:
-    - allow: [Component, System, API, Resource, Location, Template]
+    - allow: [Component, System, API, Resource, Location, Template, User, Group, Domain]
   locations:
-    # Local example data
+    # DevOpsCanvas Platform Components
     - type: file
       target: ../../examples/entities.yaml
+      rules:
+        - allow: [Component, System, API, Resource, Domain]
     
-    # Local example templates
+    # DevOpsCanvas Service Templates
     - type: file
       target: ../../examples/template/template.yaml
       rules:
         - allow: [Template]
     
-    # Local example org
+    # DevOpsCanvas Organization
     - type: file
       target: ../../examples/org.yaml
       rules:
         - allow: [User, Group]
+    
+    # GitHub Integration (when available)
+    # - type: github-discovery
+    #   target: https://github.com/DevOpsCanvasIO/*/blob/main/catalog-info.yaml
+
+  processors:
+    githubApi:
+      privateToken: ${GITHUB_TOKEN}
+    
+  providers:
+    github:
+      devopscanvas:
+        organization: 'DevOpsCanvasIO'
+        catalogPath: '/catalog-info.yaml'
+        filters:
+          branch: 'main'
+          repository: '.*'
+        schedule:
+          frequency: { minutes: 30 }
+          timeout: { minutes: 3 }
+
+kubernetes:
+  serviceLocatorMethod:
+    type: 'multiTenant'
+  clusterLocatorMethods:
+    - type: 'config'
+      clusters:
+        - url: https://kubernetes.default.svc
+          name: devopscanvas-cluster
+          authProvider: 'serviceAccount'
+          skipTLSVerify: false
+          skipMetricsLookup: false
+          serviceAccountToken: ${K8S_SERVICE_ACCOUNT_TOKEN}
+          dashboardUrl: https://k8s-dashboard.devopscanvas.io
+          dashboardApp: standard
+          customResources:
+            - group: 'argoproj.io'
+              apiVersion: 'v1alpha1'
+              plural: 'applications'
+            - group: 'networking.k8s.io'
+              apiVersion: 'v1'
+              plural: 'ingresses'
+
+# DevOpsCanvas specific configuration
+devopscanvas:
+  platform:
+    version: '2.1.0'
+    environment: 'production'
+    features:
+      gitops: true
+      observability: true
+      security: true
+      finops: true
+    endpoints:
+      controlPlane: 'http://devopscanvas-control-plane.devopscanvas.svc.cluster.local:3000'
+      argocd: 'https://argocd.devopscanvas.io'
+      grafana: 'https://grafana.devopscanvas.io'
+      prometheus: 'https://prometheus.devopscanvas.io'
+    
+  golden_paths:
+    - name: 'microservice'
+      description: 'Standard microservice with observability and GitOps'
+      template: 'devopscanvas-microservice'
+      technologies: ['nodejs', 'kubernetes', 'prometheus']
+    - name: 'frontend'
+      description: 'Modern frontend application with CI/CD'
+      template: 'devopscanvas-frontend'
+      technologies: ['react', 'typescript', 'kubernetes']
+    - name: 'infrastructure'
+      description: 'Infrastructure as Code with Terraform'
+      template: 'devopscanvas-infrastructure'
+      technologies: ['terraform', 'aws', 'kubernetes']
+
+# TechDocs configuration for DevOpsCanvas
+techdocs:
+  builder: 'local'
+  generator:
+    runIn: 'local'
+    dockerImage: 'spotify/techdocs'
+    pullImage: true
+  publisher:
+    type: 'local'
+    local:
+      publishDirectory: '/tmp/techdocs'
+  cache:
+    ttl: 3600000 # 1 hour
+
+# Search configuration
+search:
+  pg:
+    highlightOptions:
+      useHighlight: true
+      maxWord: 35
+      minWord: 1
+      shortWord: 3
+      highlightAll: false
+      maxFragments: 0
+      fragmentDelimiter: ' ... '

@@ -4,6 +4,11 @@ import HomeIcon from '@material-ui/icons/Home';
 import ExtensionIcon from '@material-ui/icons/Extension';
 import LibraryBooks from '@material-ui/icons/LibraryBooks';
 import CreateComponentIcon from '@material-ui/icons/AddCircleOutline';
+import CloudIcon from '@material-ui/icons/Cloud';
+import MonitoringIcon from '@material-ui/icons/Timeline';
+import SecurityIcon from '@material-ui/icons/Security';
+import AccountBalanceIcon from '@material-ui/icons/AccountBalance';
+import GitHubIcon from '@material-ui/icons/GitHub';
 import LogoFull from './LogoFull';
 import LogoIcon from './LogoIcon';
 import {
@@ -67,16 +72,39 @@ export const Root = ({ children }: PropsWithChildren<{}>) => (
       <SidebarDivider />
       <SidebarGroup label="Menu" icon={<MenuIcon />}>
         {/* Global nav, not org-specific */}
-        <SidebarItem icon={HomeIcon} to="catalog" text="Home" />
+        <SidebarItem icon={HomeIcon} to="catalog" text="Service Catalog" />
+        <SidebarItem icon={CreateComponentIcon} to="create" text="Create Service" />
+        <SidebarItem icon={ExtensionIcon} to="api-docs" text="APIs" />
+        <SidebarItem icon={LibraryBooks} to="docs" text="Documentation" />
         <MyGroupsSidebarItem
-          singularTitle="My Group"
-          pluralTitle="My Groups"
+          singularTitle="My Team"
+          pluralTitle="My Teams"
           icon={GroupIcon}
         />
-        <SidebarItem icon={ExtensionIcon} to="api-docs" text="APIs" />
-        <SidebarItem icon={LibraryBooks} to="docs" text="Docs" />
-        <SidebarItem icon={CreateComponentIcon} to="create" text="Create..." />
         {/* End global nav */}
+        <SidebarDivider />
+        <SidebarGroup label="DevOpsCanvas Platform" icon={<CloudIcon />}>
+          <SidebarItem 
+            icon={GitHubIcon} 
+            to="https://github.com/DevOpsCanvasIO" 
+            text="GitOps" 
+          />
+          <SidebarItem 
+            icon={MonitoringIcon} 
+            to="https://grafana.devopscanvas.io" 
+            text="Observability" 
+          />
+          <SidebarItem 
+            icon={SecurityIcon} 
+            to="/catalog?filters%5Bkind%5D=component&filters%5Bspec.type%5D=security" 
+            text="Security" 
+          />
+          <SidebarItem 
+            icon={AccountBalanceIcon} 
+            to="/catalog?filters%5Bkind%5D=component&filters%5Bspec.type%5D=finops" 
+            text="FinOps" 
+          />
+        </SidebarGroup>
         <SidebarDivider />
         <SidebarScrollWrapper>
           {/* Items in this group will be scrollable if they run out of space */}

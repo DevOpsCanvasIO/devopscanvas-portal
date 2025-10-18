@@ -1,17 +1,171 @@
 ---
-# https://backstage.io/docs/features/software-catalog/descriptor-format#kind-user
+# DevOpsCanvas Organization Structure
 apiVersion: backstage.io/v1alpha1
 kind: User
 metadata:
-  name: guest
+  name: platform-admin
+  title: Platform Administrator
+  description: DevOpsCanvas platform administrator and maintainer
+  annotations:
+    backstage.io/managed-by-location: url:file:examples/org.yaml
+    backstage.io/managed-by-origin-location: url:file:examples/org.yaml
 spec:
-  memberOf: [guests]
+  profile:
+    displayName: Platform Administrator
+    email: admin@devopscanvas.io
+    picture: https://avatars.githubusercontent.com/u/1?v=4
+  memberOf: [platform-team, devops-team]
+
 ---
-# https://backstage.io/docs/features/software-catalog/descriptor-format#kind-group
+apiVersion: backstage.io/v1alpha1
+kind: User
+metadata:
+  name: developer
+  title: Application Developer
+  description: Application developer using DevOpsCanvas platform
+  annotations:
+    backstage.io/managed-by-location: url:file:examples/org.yaml
+    backstage.io/managed-by-origin-location: url:file:examples/org.yaml
+spec:
+  profile:
+    displayName: Application Developer
+    email: developer@devopscanvas.io
+    picture: https://avatars.githubusercontent.com/u/2?v=4
+  memberOf: [development-team]
+
+---
+apiVersion: backstage.io/v1alpha1
+kind: User
+metadata:
+  name: sre-engineer
+  title: Site Reliability Engineer
+  description: SRE responsible for platform reliability and operations
+  annotations:
+    backstage.io/managed-by-location: url:file:examples/org.yaml
+    backstage.io/managed-by-origin-location: url:file:examples/org.yaml
+spec:
+  profile:
+    displayName: SRE Engineer
+    email: sre@devopscanvas.io
+    picture: https://avatars.githubusercontent.com/u/3?v=4
+  memberOf: [sre-team, devops-team]
+
+---
+# Teams
 apiVersion: backstage.io/v1alpha1
 kind: Group
 metadata:
-  name: guests
+  name: platform-team
+  title: Platform Engineering Team
+  description: Team responsible for DevOpsCanvas platform development, maintenance, and evolution
+  annotations:
+    backstage.io/managed-by-location: url:file:examples/org.yaml
+    backstage.io/managed-by-origin-location: url:file:examples/org.yaml
 spec:
   type: team
+  profile:
+    displayName: Platform Engineering Team
+    email: platform@devopscanvas.io
+    picture: https://avatars.githubusercontent.com/u/platform?v=4
+  parent: engineering
   children: []
+  members: [platform-admin]
+
+---
+apiVersion: backstage.io/v1alpha1
+kind: Group
+metadata:
+  name: development-team
+  title: Application Development Team
+  description: Team building applications on the DevOpsCanvas platform
+  annotations:
+    backstage.io/managed-by-location: url:file:examples/org.yaml
+    backstage.io/managed-by-origin-location: url:file:examples/org.yaml
+spec:
+  type: team
+  profile:
+    displayName: Application Development Team
+    email: dev@devopscanvas.io
+    picture: https://avatars.githubusercontent.com/u/dev?v=4
+  parent: engineering
+  children: []
+  members: [developer]
+
+---
+apiVersion: backstage.io/v1alpha1
+kind: Group
+metadata:
+  name: sre-team
+  title: Site Reliability Engineering Team
+  description: Team ensuring platform reliability, performance, and operational excellence
+  annotations:
+    backstage.io/managed-by-location: url:file:examples/org.yaml
+    backstage.io/managed-by-origin-location: url:file:examples/org.yaml
+spec:
+  type: team
+  profile:
+    displayName: Site Reliability Engineering Team
+    email: sre@devopscanvas.io
+    picture: https://avatars.githubusercontent.com/u/sre?v=4
+  parent: engineering
+  children: []
+  members: [sre-engineer]
+
+---
+apiVersion: backstage.io/v1alpha1
+kind: Group
+metadata:
+  name: devops-team
+  title: DevOps Team
+  description: Cross-functional team bridging development and operations
+  annotations:
+    backstage.io/managed-by-location: url:file:examples/org.yaml
+    backstage.io/managed-by-origin-location: url:file:examples/org.yaml
+spec:
+  type: team
+  profile:
+    displayName: DevOps Team
+    email: devops@devopscanvas.io
+    picture: https://avatars.githubusercontent.com/u/devops?v=4
+  parent: engineering
+  children: []
+  members: [platform-admin, sre-engineer]
+
+---
+# Departments
+apiVersion: backstage.io/v1alpha1
+kind: Group
+metadata:
+  name: engineering
+  title: Engineering Department
+  description: All engineering teams within DevOpsCanvas organization
+  annotations:
+    backstage.io/managed-by-location: url:file:examples/org.yaml
+    backstage.io/managed-by-origin-location: url:file:examples/org.yaml
+spec:
+  type: department
+  profile:
+    displayName: Engineering Department
+    email: engineering@devopscanvas.io
+    picture: https://avatars.githubusercontent.com/u/engineering?v=4
+  parent: devopscanvas
+  children: [platform-team, development-team, sre-team, devops-team]
+
+---
+# Root Organization
+apiVersion: backstage.io/v1alpha1
+kind: Group
+metadata:
+  name: devopscanvas
+  title: DevOpsCanvas Organization
+  description: DevOpsCanvas - Modern DevOps platform and tooling
+  annotations:
+    backstage.io/managed-by-location: url:file:examples/org.yaml
+    backstage.io/managed-by-origin-location: url:file:examples/org.yaml
+spec:
+  type: organization
+  profile:
+    displayName: DevOpsCanvas
+    email: contact@devopscanvas.io
+    picture: https://avatars.githubusercontent.com/u/devopscanvas?v=4
+  children: [engineering]

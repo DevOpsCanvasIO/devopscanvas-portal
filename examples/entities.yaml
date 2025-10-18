@@ -1,41 +1,280 @@
 ---
-# https://backstage.io/docs/features/software-catalog/descriptor-format#kind-system
+# DevOpsCanvas Platform Components
 apiVersion: backstage.io/v1alpha1
 kind: System
 metadata:
-  name: examples
+  name: devopscanvas-platform
+  title: DevOpsCanvas Platform
+  description: Complete DevOps platform with GitOps, observability, and developer tools
+  tags:
+    - platform
+    - kubernetes
+    - gitops
+    - devops
+  annotations:
+    backstage.io/managed-by-location: url:file:examples/entities.yaml
+    backstage.io/managed-by-origin-location: url:file:examples/entities.yaml
 spec:
-  owner: guests
+  owner: platform-team
+  domain: platform
+
 ---
-# https://backstage.io/docs/features/software-catalog/descriptor-format#kind-component
 apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
-  name: example-website
+  name: devopscanvas-portal
+  title: DevOpsCanvas Developer Portal
+  description: Backstage-based developer portal for service discovery and self-service
+  tags:
+    - backstage
+    - portal
+    - frontend
+    - developer-experience
+  annotations:
+    backstage.io/managed-by-location: url:file:examples/entities.yaml
+    backstage.io/managed-by-origin-location: url:file:examples/entities.yaml
+    backstage.io/kubernetes-id: devopscanvas-portal
+    backstage.io/kubernetes-namespace: devopscanvas
+    github.com/project-slug: DevOpsCanvasIO/devopscanvas-portal
 spec:
   type: website
-  lifecycle: experimental
-  owner: guests
-  system: examples
-  providesApis: [example-grpc-api]
+  lifecycle: production
+  owner: platform-team
+  system: devopscanvas-platform
+  providesApis:
+    - devopscanvas-catalog-api
+    - devopscanvas-templates-api
+
 ---
-# https://backstage.io/docs/features/software-catalog/descriptor-format#kind-api
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: devopscanvas-control-plane
+  title: DevOpsCanvas Control Plane
+  description: API backend for managing DevOpsCanvas platform operations
+  tags:
+    - api
+    - backend
+    - control-plane
+    - platform
+  annotations:
+    backstage.io/managed-by-location: url:file:examples/entities.yaml
+    backstage.io/managed-by-origin-location: url:file:examples/entities.yaml
+    backstage.io/kubernetes-id: devopscanvas-control-plane
+    backstage.io/kubernetes-namespace: devopscanvas
+    github.com/project-slug: DevOpsCanvasIO/devopscanvas-control-plane
+spec:
+  type: service
+  lifecycle: production
+  owner: platform-team
+  system: devopscanvas-platform
+  providesApis:
+    - devopscanvas-control-api
+
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: devopscanvas-gitops
+  title: DevOpsCanvas GitOps
+  description: ArgoCD-based GitOps deployment and configuration management
+  tags:
+    - gitops
+    - argocd
+    - deployment
+    - kubernetes
+  annotations:
+    backstage.io/managed-by-location: url:file:examples/entities.yaml
+    backstage.io/managed-by-origin-location: url:file:examples/entities.yaml
+    backstage.io/kubernetes-id: argocd-server
+    backstage.io/kubernetes-namespace: argocd
+    github.com/project-slug: DevOpsCanvasIO/devopscanvas-gitops
+spec:
+  type: service
+  lifecycle: production
+  owner: platform-team
+  system: devopscanvas-platform
+
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: devopscanvas-observability
+  title: DevOpsCanvas Observability
+  description: Monitoring, logging, and alerting stack for platform observability
+  tags:
+    - monitoring
+    - observability
+    - prometheus
+    - grafana
+  annotations:
+    backstage.io/managed-by-location: url:file:examples/entities.yaml
+    backstage.io/managed-by-origin-location: url:file:examples/entities.yaml
+    backstage.io/kubernetes-namespace: monitoring
+    github.com/project-slug: DevOpsCanvasIO/devopscanvas-observability
+spec:
+  type: service
+  lifecycle: production
+  owner: platform-team
+  system: devopscanvas-platform
+
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: devopscanvas-finops
+  title: DevOpsCanvas FinOps
+  description: Cost management and financial operations for cloud resources
+  tags:
+    - finops
+    - cost-management
+    - aws
+    - optimization
+  annotations:
+    backstage.io/managed-by-location: url:file:examples/entities.yaml
+    backstage.io/managed-by-origin-location: url:file:examples/entities.yaml
+    github.com/project-slug: DevOpsCanvasIO/devopscanvas-finops
+spec:
+  type: service
+  lifecycle: production
+  owner: platform-team
+  system: devopscanvas-platform
+
+---
+# API Definitions
 apiVersion: backstage.io/v1alpha1
 kind: API
 metadata:
-  name: example-grpc-api
+  name: devopscanvas-catalog-api
+  title: DevOpsCanvas Catalog API
+  description: Service catalog and discovery API
+  tags:
+    - api
+    - catalog
+    - discovery
+  annotations:
+    backstage.io/managed-by-location: url:file:examples/entities.yaml
+    backstage.io/managed-by-origin-location: url:file:examples/entities.yaml
 spec:
-  type: grpc
-  lifecycle: experimental
-  owner: guests
-  system: examples
+  type: openapi
+  lifecycle: production
+  owner: platform-team
+  system: devopscanvas-platform
   definition: |
-    syntax = "proto3";
+    openapi: 3.0.0
+    info:
+      title: DevOpsCanvas Catalog API
+      version: 1.0.0
+    paths:
+      /api/catalog/entities:
+        get:
+          summary: List all catalog entities
+          responses:
+            '200':
+              description: List of catalog entities
 
-    service Exampler {
-      rpc Example (ExampleMessage) returns (ExampleMessage) {};
-    }
+---
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: devopscanvas-templates-api
+  title: DevOpsCanvas Templates API
+  description: Service templates and scaffolding API
+  tags:
+    - api
+    - templates
+    - scaffolding
+  annotations:
+    backstage.io/managed-by-location: url:file:examples/entities.yaml
+    backstage.io/managed-by-origin-location: url:file:examples/entities.yaml
+spec:
+  type: openapi
+  lifecycle: production
+  owner: platform-team
+  system: devopscanvas-platform
+  definition: |
+    openapi: 3.0.0
+    info:
+      title: DevOpsCanvas Templates API
+      version: 1.0.0
+    paths:
+      /api/scaffolder/v2/templates:
+        get:
+          summary: List available templates
+          responses:
+            '200':
+              description: List of service templates
 
-    message ExampleMessage {
-      string example = 1;
-    };
+---
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: devopscanvas-control-api
+  title: DevOpsCanvas Control API
+  description: Platform control and management API
+  tags:
+    - api
+    - control-plane
+    - management
+  annotations:
+    backstage.io/managed-by-location: url:file:examples/entities.yaml
+    backstage.io/managed-by-origin-location: url:file:examples/entities.yaml
+spec:
+  type: openapi
+  lifecycle: production
+  owner: platform-team
+  system: devopscanvas-platform
+  definition: |
+    openapi: 3.0.0
+    info:
+      title: DevOpsCanvas Control API
+      version: 1.0.0
+    paths:
+      /api/health:
+        get:
+          summary: Health check
+          responses:
+            '200':
+              description: Service health status
+
+---
+# Teams and Users
+apiVersion: backstage.io/v1alpha1
+kind: Group
+metadata:
+  name: platform-team
+  title: Platform Engineering Team
+  description: Team responsible for DevOpsCanvas platform development and operations
+  annotations:
+    backstage.io/managed-by-location: url:file:examples/entities.yaml
+    backstage.io/managed-by-origin-location: url:file:examples/entities.yaml
+spec:
+  type: team
+  children: []
+
+---
+apiVersion: backstage.io/v1alpha1
+kind: User
+metadata:
+  name: platform-admin
+  title: Platform Administrator
+  description: DevOpsCanvas platform administrator
+  annotations:
+    backstage.io/managed-by-location: url:file:examples/entities.yaml
+    backstage.io/managed-by-origin-location: url:file:examples/entities.yaml
+spec:
+  memberOf: [platform-team]
+
+---
+# Domain Definition
+apiVersion: backstage.io/v1alpha1
+kind: Domain
+metadata:
+  name: platform
+  title: Platform Domain
+  description: Core platform services and infrastructure
+  annotations:
+    backstage.io/managed-by-location: url:file:examples/entities.yaml
+    backstage.io/managed-by-origin-location: url:file:examples/entities.yaml
+spec:
+  owner: platform-team

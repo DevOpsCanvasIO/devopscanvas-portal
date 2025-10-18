@@ -1,88 +1,399 @@
 apiVersion: scaffolder.backstage.io/v1beta3
-# https://backstage.io/docs/features/software-catalog/descriptor-format#kind-template
 kind: Template
 metadata:
-  name: example-nodejs-template
-  title: Example Node.js Template
-  description: An example template for the scaffolder that creates a simple Node.js service
+  name: devopscanvas-microservice
+  title: DevOpsCanvas Microservice
+  description: Create a new microservice with DevOpsCanvas best practices
+  tags:
+    - recommended
+    - microservice
+    - nodejs
+    - kubernetes
+    - devopscanvas
+  annotations:
+    backstage.io/managed-by-location: url:file:examples/template/template.yaml
+    backstage.io/managed-by-origin-location: url:file:examples/template/template.yaml
 spec:
-  owner: user:guest
+  owner: platform-team
   type: service
-
-  # These parameters are used to generate the input form in the frontend, and are
-  # used to gather input data for the execution of the template.
   parameters:
-    - title: Fill in some steps
+    - title: Service Information
       required:
         - name
+        - description
+        - owner
       properties:
         name:
           title: Name
           type: string
-          description: Unique name of the component
+          description: Unique name of the service
+          pattern: '^[a-z0-9-]+$'
           ui:autofocus: true
-          ui:options:
-            rows: 5
-    - title: Choose a location
-      required:
-        - repoUrl
-      properties:
-        repoUrl:
-          title: Repository Location
+          ui:help: 'Use lowercase letters, numbers, and hyphens only'
+        description:
+          title: Description
           type: string
-          ui:field: RepoUrlPicker
+          description: Help others understand what this service is for
+        owner:
+          title: Owner
+          type: string
+          description: Owner of the service
+          ui:field: OwnerPicker
           ui:options:
-            allowedHosts:
-              - github.com
+            catalogFilter:
+              kind: Group
+    
+    - title: Technology Stack
+      properties:
+        language:
+          title: Programming Language
+          type: string
+          description: Primary programming language
+          default: nodejs
+          enum:
+            - nodejs
+            - python
+            - java
+            - go
+          enumNames:
+            - 'Node.js'
+            - 'Python'
+            - 'Java'
+            - 'Go'
+        database:
+          title: Database
+          type: string
+          description: Database technology (optional)
+          enum:
+            - none
+            - postgresql
+            - mongodb
+            - redis
+          enumNames:
+            - 'None'
+            - 'PostgreSQL'
+            - 'MongoDB'
+            - 'Redis'
+          default: none
+        
+    - title: DevOpsCanvas Configuration
+      properties:
+        enableGitOps:
+          title: Enable GitOps
+          type: boolean
+          description: Include ArgoCD deployment configuration
+          default: true
+        enableObservability:
+          title: Enable Observability
+          type: boolean
+          description: Include Prometheus metrics and health checks
+          default: true
+        enableSecurity:
+          title: Enable Security Scanning
+          type: boolean
+          description: Include container security scanning and policies
+          default: true
+        kubernetesNamespace:
+          title: Kubernetes Namespace
+          type: string
+          description: Target namespace for deployment
+          default: default
+          enum:
+            - default
+            - devopscanvas
+            - production
+            - staging
+            - development
 
-  # These steps are executed in the scaffolder backend, using data that we gathered
-  # via the parameters above.
   steps:
-    # Each step executes an action, in this case one templates files into the working directory.
     - id: fetch-base
-      name: Fetch Base
+      name: Fetch Base Template
       action: fetch:template
       input:
         url: ./content
         values:
           name: ${{ parameters.name }}
+          description: ${{ parameters.description }}
+          owner: ${{ parameters.owner }}
+          language: ${{ parameters.language }}
+          database: ${{ parameters.database }}
+          enableGitOps: ${{ parameters.enableGitOps }}
+          enableObservability: ${{ parameters.enableObservability }}
+          enableSecurity: ${{ parameters.enableSecurity }}
+          kubernetesNamespace: ${{ parameters.kubernetesNamespace }}
 
-    # This step publishes the contents of the working directory to GitHub.
-    # If you or your organization prefer another default branch name over 'main'
-    # you can change that here.
     - id: publish
-      name: Publish
+      name: Publish to GitHub
       action: publish:github
       input:
-        description: This is ${{ parameters.name }}
-        repoUrl: ${{ parameters.repoUrl }}
-        defaultBranch: 'main'
+        allowedHosts: ['github.com']
+        description: ${{ parameters.description }}
+        repoUrl: github.com?owner=DevOpsCanvasIO&repo=${{ parameters.name }}
+        defaultBranch: main
+        gitCommitMessage: 'feat: initial service scaffolding from DevOpsCanvas template'
+        gitAuthorName: 'DevOpsCanvas Platform'
+        gitAuthorEmail: 'platform@devopscanvas.io'
 
-    # The final step is to register our new component in the catalog.
     - id: register
-      name: Register
+      name: Register in Catalog
       action: catalog:register
       input:
-        repoContentsUrl: ${{ steps['publish'].output.repoContentsUrl }}
+        repoContentsUrl: ${{ steps.publish.output.repoContentsUrl }}
         catalogInfoPath: '/catalog-info.yaml'
 
-    # Let's notify the user that the template has completed using the Notification action
-    - id: notify
-      name: Notify
-      action: notification:send
-      input:
-        recipients: entity
-        entityRefs:
-          - user:default/guest
-        title: 'Template executed'
-        info: 'Your template has been executed'
-        severity: 'normal'
-
-  # Outputs are displayed to the user after a successful execution of the template.
   output:
     links:
       - title: Repository
-        url: ${{ steps['publish'].output.remoteUrl }}
+        url: ${{ steps.publish.output.remoteUrl }}
       - title: Open in catalog
         icon: catalog
-        entityRef: ${{ steps['register'].output.entityRef }}
+        entityRef: ${{ steps.register.output.entityRef }}
+
+---
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: devopscanvas-frontend
+  title: DevOpsCanvas Frontend Application
+  description: Create a new frontend application with DevOpsCanvas standards
+  tags:
+    - recommended
+    - frontend
+    - react
+    - typescript
+    - devopscanvas
+  annotations:
+    backstage.io/managed-by-location: url:file:examples/template/template.yaml
+    backstage.io/managed-by-origin-location: url:file:examples/template/template.yaml
+spec:
+  owner: platform-team
+  type: website
+  parameters:
+    - title: Application Information
+      required:
+        - name
+        - description
+        - owner
+      properties:
+        name:
+          title: Name
+          type: string
+          description: Unique name of the application
+          pattern: '^[a-z0-9-]+$'
+          ui:autofocus: true
+        description:
+          title: Description
+          type: string
+          description: Help others understand what this application does
+        owner:
+          title: Owner
+          type: string
+          description: Owner of the application
+          ui:field: OwnerPicker
+          ui:options:
+            catalogFilter:
+              kind: Group
+    
+    - title: Frontend Technology
+      properties:
+        framework:
+          title: Frontend Framework
+          type: string
+          description: Frontend framework to use
+          default: react
+          enum:
+            - react
+            - vue
+            - angular
+            - nextjs
+          enumNames:
+            - 'React'
+            - 'Vue.js'
+            - 'Angular'
+            - 'Next.js'
+        styling:
+          title: Styling Solution
+          type: string
+          description: CSS/styling approach
+          default: tailwind
+          enum:
+            - tailwind
+            - styled-components
+            - css-modules
+            - sass
+          enumNames:
+            - 'Tailwind CSS'
+            - 'Styled Components'
+            - 'CSS Modules'
+            - 'Sass/SCSS'
+        
+    - title: DevOpsCanvas Features
+      properties:
+        enablePWA:
+          title: Progressive Web App
+          type: boolean
+          description: Enable PWA features
+          default: false
+        enableTesting:
+          title: Testing Setup
+          type: boolean
+          description: Include Jest and testing utilities
+          default: true
+        enableStorybook:
+          title: Storybook
+          type: boolean
+          description: Include Storybook for component development
+          default: false
+
+  steps:
+    - id: fetch-base
+      name: Fetch Base Template
+      action: fetch:template
+      input:
+        url: ./frontend-content
+        values:
+          name: ${{ parameters.name }}
+          description: ${{ parameters.description }}
+          owner: ${{ parameters.owner }}
+          framework: ${{ parameters.framework }}
+          styling: ${{ parameters.styling }}
+          enablePWA: ${{ parameters.enablePWA }}
+          enableTesting: ${{ parameters.enableTesting }}
+          enableStorybook: ${{ parameters.enableStorybook }}
+
+    - id: publish
+      name: Publish to GitHub
+      action: publish:github
+      input:
+        allowedHosts: ['github.com']
+        description: ${{ parameters.description }}
+        repoUrl: github.com?owner=DevOpsCanvasIO&repo=${{ parameters.name }}
+        defaultBranch: main
+
+    - id: register
+      name: Register in Catalog
+      action: catalog:register
+      input:
+        repoContentsUrl: ${{ steps.publish.output.repoContentsUrl }}
+        catalogInfoPath: '/catalog-info.yaml'
+
+  output:
+    links:
+      - title: Repository
+        url: ${{ steps.publish.output.remoteUrl }}
+      - title: Open in catalog
+        icon: catalog
+        entityRef: ${{ steps.register.output.entityRef }}
+
+---
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: devopscanvas-infrastructure
+  title: DevOpsCanvas Infrastructure Component
+  description: Create infrastructure as code with Terraform and DevOpsCanvas patterns
+  tags:
+    - infrastructure
+    - terraform
+    - aws
+    - kubernetes
+    - devopscanvas
+  annotations:
+    backstage.io/managed-by-location: url:file:examples/template/template.yaml
+    backstage.io/managed-by-origin-location: url:file:examples/template/template.yaml
+spec:
+  owner: platform-team
+  type: resource
+  parameters:
+    - title: Infrastructure Information
+      required:
+        - name
+        - description
+        - owner
+      properties:
+        name:
+          title: Name
+          type: string
+          description: Name of the infrastructure component
+          pattern: '^[a-z0-9-]+$'
+        description:
+          title: Description
+          type: string
+          description: What infrastructure does this manage?
+        owner:
+          title: Owner
+          type: string
+          description: Team responsible for this infrastructure
+          ui:field: OwnerPicker
+    
+    - title: Infrastructure Type
+      properties:
+        infraType:
+          title: Infrastructure Type
+          type: string
+          description: Type of infrastructure to create
+          default: kubernetes-addon
+          enum:
+            - kubernetes-addon
+            - aws-service
+            - networking
+            - security
+            - monitoring
+          enumNames:
+            - 'Kubernetes Add-on'
+            - 'AWS Service'
+            - 'Networking'
+            - 'Security'
+            - 'Monitoring'
+        environment:
+          title: Target Environment
+          type: string
+          description: Environment for deployment
+          default: development
+          enum:
+            - development
+            - staging
+            - production
+            - all
+          enumNames:
+            - 'Development'
+            - 'Staging'
+            - 'Production'
+            - 'All Environments'
+
+  steps:
+    - id: fetch-base
+      name: Fetch Infrastructure Template
+      action: fetch:template
+      input:
+        url: ./infrastructure-content
+        values:
+          name: ${{ parameters.name }}
+          description: ${{ parameters.description }}
+          owner: ${{ parameters.owner }}
+          infraType: ${{ parameters.infraType }}
+          environment: ${{ parameters.environment }}
+
+    - id: publish
+      name: Publish to GitHub
+      action: publish:github
+      input:
+        allowedHosts: ['github.com']
+        description: ${{ parameters.description }}
+        repoUrl: github.com?owner=DevOpsCanvasIO&repo=infra-${{ parameters.name }}
+        defaultBranch: main
+
+    - id: register
+      name: Register in Catalog
+      action: catalog:register
+      input:
+        repoContentsUrl: ${{ steps.publish.output.repoContentsUrl }}
+        catalogInfoPath: '/catalog-info.yaml'
+
+  output:
+    links:
+      - title: Repository
+        url: ${{ steps.publish.output.remoteUrl }}
+      - title: Open in catalog
+        icon: catalog
+        entityRef: ${{ steps.register.output.entityRef }}
