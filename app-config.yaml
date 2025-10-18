@@ -51,22 +51,18 @@ catalog:
   rules:
     - allow: [Component, System, API, Resource, Location, Template]
   locations:
-    # DevOpsCanvas service templates
-    - type: url
-      target: https://github.com/DevOpsCanvasIO/devopscanvas-templates/blob/main/node-service/template.yaml
+    # Local example data
+    - type: file
+      target: ../../examples/entities.yaml
+    
+    # Local example templates
+    - type: file
+      target: ../../examples/template/template.yaml
       rules:
         - allow: [Template]
     
-    # DevOpsCanvas components
-    - type: url
-      target: https://github.com/DevOpsCanvasIO/devopscanvas-control-plane/blob/main/catalog-info.yaml
+    # Local example org
+    - type: file
+      target: ../../examples/org.yaml
       rules:
-        - allow: [Component, API]
-    
-    - type: url
-      target: https://github.com/DevOpsCanvasIO/devopscanvas-portal/blob/main/catalog-info.yaml
-      rules:
-        - allow: [Component]
-
-scorecards:
-  apiBaseUrl: http://devopscanvas-control-plane.devopscanvas.svc.cluster.local:3000
+        - allow: [User, Group]

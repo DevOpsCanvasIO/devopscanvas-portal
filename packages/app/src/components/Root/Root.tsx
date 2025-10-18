@@ -1,8 +1,7 @@
-import React, { PropsWithChildren } from 'react';
+import { PropsWithChildren } from 'react';
 import { makeStyles } from '@material-ui/core';
 import HomeIcon from '@material-ui/icons/Home';
 import ExtensionIcon from '@material-ui/icons/Extension';
-import MapIcon from '@material-ui/icons/MyLocation';
 import LibraryBooks from '@material-ui/icons/LibraryBooks';
 import CreateComponentIcon from '@material-ui/icons/AddCircleOutline';
 import LogoFull from './LogoFull';
@@ -21,9 +20,14 @@ import {
   SidebarPage,
   SidebarScrollWrapper,
   SidebarSpace,
+  useSidebarOpenState,
+  Link,
 } from '@backstage/core-components';
 import MenuIcon from '@material-ui/icons/Menu';
 import SearchIcon from '@material-ui/icons/Search';
+import { MyGroupsSidebarItem } from '@backstage/plugin-org';
+import GroupIcon from '@material-ui/icons/People';
+import { NotificationsSidebarItem } from '@backstage/plugin-notifications';
 
 const useSidebarLogoStyles = makeStyles({
   root: {
@@ -42,13 +46,13 @@ const useSidebarLogoStyles = makeStyles({
 
 const SidebarLogo = () => {
   const classes = useSidebarLogoStyles();
-  const { isOpen } = sidebarConfig.useContext();
+  const { isOpen } = useSidebarOpenState();
 
   return (
     <div className={classes.root}>
-      <a className={classes.link} href="/">
+      <Link to="/" underline="none" className={classes.link} aria-label="Home">
         {isOpen ? <LogoFull /> : <LogoIcon />}
-      </a>
+      </Link>
     </div>
   );
 };
@@ -62,16 +66,25 @@ export const Root = ({ children }: PropsWithChildren<{}>) => (
       </SidebarGroup>
       <SidebarDivider />
       <SidebarGroup label="Menu" icon={<MenuIcon />}>
-        <SidebarItem icon={HomeIcon} to="/" text="Home" />
-        <SidebarItem icon={ExtensionIcon} to="/catalog" text="Catalog" />
-        <SidebarItem icon={CreateComponentIcon} to="/create" text="Create" />
-        <SidebarItem icon={LibraryBooks} to="/docs" text="Docs" />
-        <SidebarItem icon={MapIcon} to="/tech-radar" text="Tech Radar" />
+        {/* Global nav, not org-specific */}
+        <SidebarItem icon={HomeIcon} to="catalog" text="Home" />
+        <MyGroupsSidebarItem
+          singularTitle="My Group"
+          pluralTitle="My Groups"
+          icon={GroupIcon}
+        />
+        <SidebarItem icon={ExtensionIcon} to="api-docs" text="APIs" />
+        <SidebarItem icon={LibraryBooks} to="docs" text="Docs" />
+        <SidebarItem icon={CreateComponentIcon} to="create" text="Create..." />
+        {/* End global nav */}
         <SidebarDivider />
-        <SidebarItem icon={ExtensionIcon} to="/scorecards" text="Scorecards" />
-        <SidebarItem icon={ExtensionIcon} to="/services" text="Services" />
+        <SidebarScrollWrapper>
+          {/* Items in this group will be scrollable if they run out of space */}
+        </SidebarScrollWrapper>
       </SidebarGroup>
       <SidebarSpace />
+      <SidebarDivider />
+      <NotificationsSidebarItem />
       <SidebarDivider />
       <SidebarGroup
         label="Settings"
