@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 
@@ -11,7 +11,7 @@ app.use(cors());
 app.use(express.json());
 
 // Health check endpoint
-app.get('/healthcheck', (req, res) => {
+app.get('/healthcheck', (req: Request, res: Response) => {
   res.status(200).json({ 
     status: 'healthy', 
     service: 'DevOpsCanvas Portal',
@@ -20,7 +20,7 @@ app.get('/healthcheck', (req, res) => {
 });
 
 // Basic API endpoints
-app.get('/api/catalog/entities', (req, res) => {
+app.get('/api/catalog/entities', (req: Request, res: Response) => {
   res.json([
     {
       apiVersion: 'backstage.io/v1alpha1',
@@ -54,7 +54,7 @@ app.get('/api/catalog/entities', (req, res) => {
 });
 
 // Templates endpoint
-app.get('/api/scaffolder/v2/templates', (req, res) => {
+app.get('/api/scaffolder/v2/templates', (req: Request, res: Response) => {
   res.json([
     {
       apiVersion: 'scaffolder.backstage.io/v1beta3',
@@ -93,7 +93,7 @@ app.get('/api/scaffolder/v2/templates', (req, res) => {
 app.use(express.static('public'));
 
 // Default route
-app.get('/', (req, res) => {
+app.get('/', (req: Request, res: Response) => {
   res.send(`
     <!DOCTYPE html>
     <html>
