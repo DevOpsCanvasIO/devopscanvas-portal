@@ -1,2 +1,73 @@
-image: { repository: nginx, tag: alpine }
-service: { type: LoadBalancer, port: 80 }
+image:
+  repository: ghcr.io/DevOpsCanvasIO/devopscanvas-portal
+  tag: latest
+  pullPolicy: Always
+
+service:
+  type: LoadBalancer
+  port: 7007
+  targetPort: 7007
+
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  hosts:
+    - host: portal.devopscanvas.DevOpsCanvasIO.dev
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: portal-tls
+      hosts:
+        - portal.devopscanvas.DevOpsCanvasIO.dev
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 2Gi
+  requests:
+    cpu: 300m
+    memory: 512Mi
+
+env:
+  NODE_ENV: production
+  APP_CONFIG_app_baseUrl: https://portal.devopscanvas.DevOpsCanvasIO.dev
+  APP_CONFIG_backend_baseUrl: https://portal.devopscanvas.DevOpsCanvasIO.dev
+  APP_CONFIG_backend_cors_origin: https://portal.devopscanvas.DevOpsCanvasIO.dev
+  GITHUB_TOKEN: ${GITHUB_TOKEN}
+  GITHUB_ORG: DevOpsCanvasIO
+
+healthCheck:
+  enabled: true
+  path: /healthcheck
+  port: 7007
+
+readinessProbe:
+  httpGet:
+    path: /healthcheck
+    port: 7007
+  initialDelaySeconds: 60
+  periodSeconds: 10
+
+livenessProbe:
+  httpGet:
+    path: /healthcheck
+    port: 7007
+  initialDelaySeconds: 120
+  periodSeconds: 30
+
+# PostgreSQL for Backstage
+postgresql:
+  enabled: true
+  auth:
+    postgresPassword: backstage
+    username: backstage
+    password: backstage
+    database: backstage
+  primary:
+    persistence:
+      enabled: true
+      size: 10Gi
