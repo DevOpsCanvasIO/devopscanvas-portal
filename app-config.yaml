@@ -1,9 +1,72 @@
-app: { title: DevOpsCanvas Portal }
-integrations: { github: [ { host: github.com } ] }
+app:
+  title: DevOpsCanvas Developer Portal
+  baseUrl: http://localhost:7007
+
+organization:
+  name: DevOpsCanvas
+
 backend:
+  baseUrl: http://localhost:7007
+  listen:
+    port: 7007
+    host: 0.0.0.0
+  csp:
+    connect-src: ["'self'", 'http:', 'https:']
+  cors:
+    origin: http://localhost:7007
+    methods: [GET, HEAD, PATCH, POST, PUT, DELETE]
+    credentials: true
+  database:
+    client: better-sqlite3
+    connection: ':memory:'
   reading:
     allow:
-      - host: devopscanvas-control-plane.dev.svc.cluster.local
+      - host: devopscanvas-control-plane.devopscanvas.svc.cluster.local
       - host: localhost
+
+integrations:
+  github:
+    - host: github.com
+      token: ${GITHUB_TOKEN}
+
+proxy: {}
+
+techdocs:
+  builder: 'local'
+  generator:
+    runIn: 'local'
+  publisher:
+    type: 'local'
+
+auth:
+  providers:
+    guest: {}
+
+scaffolder: {}
+
+catalog:
+  import:
+    entityFilename: catalog-info.yaml
+    pullRequestBranchName: backstage-integration
+  rules:
+    - allow: [Component, System, API, Resource, Location, Template]
+  locations:
+    # DevOpsCanvas service templates
+    - type: url
+      target: https://github.com/DevOpsCanvasIO/devopscanvas-templates/blob/main/node-service/template.yaml
+      rules:
+        - allow: [Template]
+    
+    # DevOpsCanvas components
+    - type: url
+      target: https://github.com/DevOpsCanvasIO/devopscanvas-control-plane/blob/main/catalog-info.yaml
+      rules:
+        - allow: [Component, API]
+    
+    - type: url
+      target: https://github.com/DevOpsCanvasIO/devopscanvas-portal/blob/main/catalog-info.yaml
+      rules:
+        - allow: [Component]
+
 scorecards:
-  apiBaseUrl: http://devopscanvas-control-plane.dev.svc.cluster.local:3000
+  apiBaseUrl: http://devopscanvas-control-plane.devopscanvas.svc.cluster.local:3000

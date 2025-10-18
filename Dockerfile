@@ -1,14 +1,34 @@
-FROM nginx:alpine
+FROM node:18-alpine
 
-# Copy a simple index page
-RUN echo '<html><body><h1>DevOpsCanvas Portal</h1><p>Portal is running!</p></body></html>' > /usr/share/nginx/html/index.html
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+COPY packages/backend/package*.json ./packages/backend/
+
+# Install dependencies
+RUN npm install
+
+# Copy source code
+COPY . .
+
+# Build the backend
+RUN npm run build:backend
+
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001
+
+# Change ownership of the app directory
+RUN chown -R nodejs:nodejs /app
+USER nodejs
 
 # Expose port
-EXPOSE 80
+EXPOSE 7007
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:80/ || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://localhost:7007/healthcheck || exit 1
 
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Start the backend
+CMD ["npm", "run", "start:backend"]

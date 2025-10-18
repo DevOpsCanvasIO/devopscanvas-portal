@@ -1,0 +1,11 @@
+{
+  "version": "1.0.0",
+  "npmClient": "npm",
+  "command": {
+    "version": {
+      "allowBranch": "main",
+      "conventionalCommits": true
+    }
+  },
+  "packages": ["packages/*"]
+}
