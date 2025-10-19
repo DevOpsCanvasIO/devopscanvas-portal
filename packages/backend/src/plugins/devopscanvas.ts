@@ -1,8 +1,5 @@
-import {
-  coreServices,
-  createBackendModule,
-} from '@backstage/backend-plugin-api';
 import { Router } from 'express';
+import { createBackendModule, coreServices } from '@backstage/backend-plugin-api';
 
 export const devopscanvasModule = createBackendModule({
   pluginId: 'devopscanvas',
@@ -11,15 +8,12 @@ export const devopscanvasModule = createBackendModule({
     reg.registerInit({
       deps: {
         httpRouter: coreServices.httpRouter,
-        logger: coreServices.logger,
       },
-      async init({ httpRouter, logger }) {
-        logger.info('Initializing DevOpsCanvas backend module');
-        
+      async init({ httpRouter }) {
         const router = Router();
 
   // DevOpsCanvas Platform Info API
-  router.get('/api/devopscanvas/platform/info', (req, res) => {
+  router.get('/api/devopscanvas/platform/info', (_req, res) => {
     res.json({
       name: 'DevOpsCanvas Platform',
       version: '2.1.0',
@@ -48,7 +42,7 @@ export const devopscanvasModule = createBackendModule({
   });
 
   // DevOpsCanvas Golden Paths API
-  router.get('/api/devopscanvas/golden-paths', (req, res) => {
+  router.get('/api/devopscanvas/golden-paths', (_req, res) => {
     res.json([
       {
         name: 'microservice',
@@ -81,7 +75,7 @@ export const devopscanvasModule = createBackendModule({
   });
 
   // Tech Radar API
-  router.get('/api/tech-radar', (req, res) => {
+  router.get('/api/tech-radar', (_req, res) => {
     res.json({
       rings: [
         { id: 'adopt', name: 'ADOPT', color: '#93c47d' },
@@ -136,10 +130,6 @@ export const devopscanvasModule = createBackendModule({
   });
 
         httpRouter.use(router);
-        httpRouter.addAuthPolicy({
-          path: '/api/devopscanvas',
-          allow: 'unauthenticated',
-        });
       },
     });
   },

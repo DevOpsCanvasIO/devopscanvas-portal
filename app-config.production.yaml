@@ -1,6 +1,6 @@
 app:
   title: DevOpsCanvas Developer Portal
-  baseUrl: ${APP_CONFIG_app_baseUrl}
+  baseUrl: ${APP_BASE_URL}
   branding:
     theme:
       light:
@@ -18,14 +18,14 @@ organization:
   name: DevOpsCanvas
 
 backend:
-  baseUrl: ${APP_CONFIG_backend_baseUrl}
+  baseUrl: ${BACKEND_BASE_URL}
   listen:
-    port: 7007
+    port: ${PORT:-7007}
     host: 0.0.0.0
   csp:
     connect-src: ["'self'", 'http:', 'https:']
   cors:
-    origin: ${APP_CONFIG_backend_cors_origin}
+    origin: ${BACKEND_BASE_URL}
     methods: [GET, HEAD, PATCH, POST, PUT, DELETE]
     credentials: true
   database:
@@ -84,18 +84,6 @@ catalog:
   processors:
     githubApi:
       privateToken: ${GITHUB_TOKEN}
-    
-  providers:
-    github:
-      devopscanvas:
-        organization: 'DevOpsCanvasIO'
-        catalogPath: '/catalog-info.yaml'
-        filters:
-          branch: 'main'
-          repository: '.*'
-        schedule:
-          frequency: { minutes: 30 }
-          timeout: { minutes: 3 }
 
 kubernetes:
   serviceLocatorMethod:
@@ -111,19 +99,12 @@ kubernetes:
           serviceAccountToken: ${K8S_SERVICE_ACCOUNT_TOKEN}
           dashboardUrl: https://k8s-dashboard.devopscanvas.io
           dashboardApp: standard
-          customResources:
-            - group: 'argoproj.io'
-              apiVersion: 'v1alpha1'
-              plural: 'applications'
-            - group: 'networking.k8s.io'
-              apiVersion: 'v1'
-              plural: 'ingresses'
 
 # DevOpsCanvas specific configuration
 devopscanvas:
   platform:
     version: '2.1.0'
-    environment: 'production'
+    environment: ${ENVIRONMENT:-production}
     features:
       gitops: true
       observability: true
@@ -134,34 +115,6 @@ devopscanvas:
       argocd: 'https://argocd.devopscanvas.io'
       grafana: 'https://grafana.devopscanvas.io'
       prometheus: 'https://prometheus.devopscanvas.io'
-    
-  golden_paths:
-    - name: 'microservice'
-      description: 'Standard microservice with observability and GitOps'
-      template: 'devopscanvas-microservice'
-      technologies: ['nodejs', 'kubernetes', 'prometheus']
-    - name: 'frontend'
-      description: 'Modern frontend application with CI/CD'
-      template: 'devopscanvas-frontend'
-      technologies: ['react', 'typescript', 'kubernetes']
-    - name: 'infrastructure'
-      description: 'Infrastructure as Code with Terraform'
-      template: 'devopscanvas-infrastructure'
-      technologies: ['terraform', 'aws', 'kubernetes']
-
-# TechDocs configuration for DevOpsCanvas
-techdocs:
-  builder: 'local'
-  generator:
-    runIn: 'local'
-    dockerImage: 'spotify/techdocs'
-    pullImage: true
-  publisher:
-    type: 'local'
-    local:
-      publishDirectory: '/tmp/techdocs'
-  cache:
-    ttl: 3600000 # 1 hour
 
 # Search configuration
 search:
