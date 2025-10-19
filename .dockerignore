@@ -13,7 +13,6 @@ build
 .gitignore
 *.md
 docs/
-examples/
 
 # IDE files
 .vscode
