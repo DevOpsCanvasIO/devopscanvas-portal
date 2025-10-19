@@ -31,20 +31,20 @@ jobs:
       - name: Validate YAML files
         run: |
           # Check if YAML files are valid
+          cd src
           node -e "
             const yaml = require('js-yaml');
             const fs = require('fs');
             try {
-              yaml.loadAll(fs.readFileSync('examples/entities.yaml', 'utf8'));
-              yaml.loadAll(fs.readFileSync('examples/template/template.yaml', 'utf8'));
-              yaml.loadAll(fs.readFileSync('examples/org.yaml', 'utf8'));
+              yaml.loadAll(fs.readFileSync('../examples/entities.yaml', 'utf8'));
+              yaml.loadAll(fs.readFileSync('../examples/template/template.yaml', 'utf8'));
+              yaml.loadAll(fs.readFileSync('../examples/org.yaml', 'utf8'));
               console.log('✅ All YAML files are valid');
             } catch (error) {
               console.error('❌ YAML validation failed:', error.message);
               process.exit(1);
             }
           "
-        working-directory: src
 
   build-and-push:
     # needs: test  # Temporarily skip tests to focus on keyless signing
