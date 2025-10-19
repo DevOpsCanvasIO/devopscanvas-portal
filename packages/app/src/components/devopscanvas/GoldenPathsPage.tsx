@@ -144,7 +144,9 @@ export const GoldenPathsPage = () => {
                 <Card className={classes.pathCard}>
                   <CardContent>
                     <Box display="flex" flexDirection="column" alignItems="center" textAlign="center">
-                      <IconComponent className={classes.pathIcon} />
+                      <Box className={classes.pathIcon}>
+                        <IconComponent />
+                      </Box>
                       
                       <Box display="flex" alignItems="center" mb={1}>
                         <Typography variant="h5" gutterBottom>

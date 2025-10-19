@@ -208,7 +208,7 @@ export const TechRadarPage = () => {
                           <TableRow key={entry.id} className={classes.entryRow}>
                             <TableCell>
                               <Box>
-                                <Typography variant="body2" fontWeight="medium">
+                                <Typography variant="body2" style={{ fontWeight: 500 }}>
                                   {entry.title}
                                 </Typography>
                                 <Typography variant="caption" color="textSecondary">

@@ -10,8 +10,8 @@ import SecurityIcon from '@material-ui/icons/Security';
 import AccountBalanceIcon from '@material-ui/icons/AccountBalance';
 import GitHubIcon from '@material-ui/icons/GitHub';
 import DashboardIcon from '@material-ui/icons/Dashboard';
-import RouteIcon from '@material-ui/icons/Route';
-import RadarIcon from '@material-ui/icons/Radar';
+import TimelineIcon from '@material-ui/icons/Timeline';
+import ExploreIcon from '@material-ui/icons/Explore';
 import LogoFull from './LogoFull';
 import LogoIcon from './LogoIcon';
 import {
@@ -76,8 +76,8 @@ export const Root = ({ children }: PropsWithChildren<{}>) => (
       <SidebarGroup label="DevOpsCanvas" icon={<DashboardIcon />}>
         {/* DevOpsCanvas-specific navigation */}
         <SidebarItem icon={DashboardIcon} to="devopscanvas-dashboard" text="Platform Dashboard" />
-        <SidebarItem icon={RouteIcon} to="golden-paths" text="Golden Paths" />
-        <SidebarItem icon={RadarIcon} to="tech-radar" text="Tech Radar" />
+        <SidebarItem icon={TimelineIcon} to="golden-paths" text="Golden Paths" />
+        <SidebarItem icon={ExploreIcon} to="tech-radar" text="Tech Radar" />
       </SidebarGroup>
       <SidebarDivider />
       <SidebarGroup label="Developer Tools" icon={<MenuIcon />}>
@@ -115,11 +115,10 @@ export const Root = ({ children }: PropsWithChildren<{}>) => (
           text="FinOps" 
         />
       </SidebarGroup>
-        <SidebarDivider />
-        <SidebarScrollWrapper>
-          {/* Items in this group will be scrollable if they run out of space */}
-        </SidebarScrollWrapper>
-      </SidebarGroup>
+      <SidebarDivider />
+      <SidebarScrollWrapper>
+        {/* Items in this group will be scrollable if they run out of space */}
+      </SidebarScrollWrapper>
       <SidebarSpace />
       <SidebarDivider />
       <NotificationsSidebarItem />
