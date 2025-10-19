@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DevOpsCanvas Developer Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        
+        .app-container {
+            display: flex;
+            height: 100vh;
+        }
+        
+        .sidebar {
+            width: 280px;
+            background: #1976d2;
+            color: white;
+            overflow-y: auto;
+            box-shadow: 2px 0 4px rgba(0,0,0,0.1);
+        }
+        
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            font-size: 20px;
+            font-weight: 500;
+        }
+        
+        .logo .material-icons {
+            margin-right: 12px;
+            font-size: 28px;
+        }
+        
+        .nav-section {
+            padding: 16px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .nav-section-title {
+            padding: 8px 20px;
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: uppercase;
+            opacity: 0.7;
+            letter-spacing: 1px;
+        }
+        
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            text-decoration: none;
+            color: white;
+        }
+        
+        .nav-item:hover {
+            background-color: rgba(255,255,255,0.1);
+        }
+        
+        .nav-item.active {
+            background-color: rgba(255,255,255,0.2);
+            border-right: 3px solid #90caf9;
+        }
+        
+        .nav-item .material-icons {
+            margin-right: 16px;
+            font-size: 20px;
+        }
+        
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .header {
+            background: white;
+            padding: 16px 24px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            font-weight: 400;
+            color: #1976d2;
+        }
+        
+        .content {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+        }
+        
+        .page-header {
+            margin-bottom: 32px;
+        }
+        
+        .page-title {
+            font-size: 32px;
+            font-weight: 300;
+            margin-bottom: 8px;
+            color: #1976d2;
+        }
+        
+        .page-subtitle {
+            font-size: 16px;
+            color: #666;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: transform 0.2s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .stat-number {
+            font-size: 36px;
+            font-weight: 300;
+            color: #1976d2;
+            margin-bottom: 8px;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+        
+        .feature-card {
+            background: white;
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .feature-icon {
+            font-size: 48px;
+            color: #1976d2;
+            margin-bottom: 16px;
+        }
+        
+        .feature-title {
+            font-size: 20px;
+            font-weight: 500;
+            margin-bottom: 12px;
+            color: #333;
+        }
+        
+        .feature-description {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.5;
+            margin-bottom: 16px;
+        }
+        
+        .feature-link {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 16px;
+            background: #1976d2;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+        
+        .feature-link:hover {
+            background: #1565c0;
+        }
+        
+        .feature-link .material-icons {
+            margin-left: 8px;
+            font-size: 16px;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 16px;
+            border-radius: 4px;
+            margin-bottom: 16px;
+        }
+        
+        .table {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .table-header {
+            background: #f5f5f5;
+            padding: 16px 24px;
+            border-bottom: 1px solid #e0e0e0;
+            font-weight: 500;
+        }
+        
+        .table-row {
+            padding: 16px 24px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .table-row:last-child {
+            border-bottom: none;
+        }
+        
+        .table-row:hover {
+            background: #f9f9f9;
+        }
+        
+        .chip {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+        
+        .chip.adopt {
+            background: #c8e6c9;
+            color: #2e7d32;
+        }
+        
+        .chip.trial {
+            background: #b3e5fc;
+            color: #0277bd;
+        }
+        
+        .chip.assess {
+            background: #fff3e0;
+            color: #ef6c00;
+        }
+        
+        .chip.hold {
+            background: #ffcdd2;
+            color: #c62828;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <span class="material-icons">layers</span>
+                    DevOpsCanvas
+                </div>
+            </div>
+            
+            <div class="nav-section">
+                <div class="nav-section-title">DevOpsCanvas</div>
+                <a href="#dashboard" class="nav-item active" onclick="showPage('dashboard')">
+                    <span class="material-icons">dashboard</span>
+                    Platform Dashboard
+                </a>
+                <a href="#golden-paths" class="nav-item" onclick="showPage('golden-paths')">
+                    <span class="material-icons">timeline</span>
+                    Golden Paths
+                </a>
+                <a href="#tech-radar" class="nav-item" onclick="showPage('tech-radar')">
+                    <span class="material-icons">explore</span>
+                    Tech Radar
+                </a>
+            </div>
+            
+            <div class="nav-section">
+                <div class="nav-section-title">Developer Tools</div>
+                <a href="#catalog" class="nav-item" onclick="showPage('catalog')">
+                    <span class="material-icons">home</span>
+                    Service Catalog
+                </a>
+                <a href="#create" class="nav-item" onclick="showPage('create')">
+                    <span class="material-icons">add_circle_outline</span>
+                    Create Service
+                </a>
+                <a href="#api-docs" class="nav-item" onclick="showPage('api-docs')">
+                    <span class="material-icons">extension</span>
+                    APIs
+                </a>
+                <a href="#docs" class="nav-item" onclick="showPage('docs')">
+                    <span class="material-icons">library_books</span>
+                    Documentation
+                </a>
+            </div>
+            
+            <div class="nav-section">
+                <div class="nav-section-title">Platform Services</div>
+                <a href="https://github.com/DevOpsCanvasIO" target="_blank" class="nav-item">
+                    <span class="material-icons">code</span>
+                    GitOps
+                </a>
+                <a href="https://grafana.devopscanvas.io" target="_blank" class="nav-item">
+                    <span class="material-icons">timeline</span>
+                    Observability
+                </a>
+                <a href="#security" class="nav-item" onclick="showPage('security')">
+                    <span class="material-icons">security</span>
+                    Security
+                </a>
+                <a href="#finops" class="nav-item" onclick="showPage('finops')">
+                    <span class="material-icons">account_balance</span>
+                    FinOps
+                </a>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="header">
+                <h1 id="page-title">DevOpsCanvas Platform Dashboard</h1>
+            </div>
+            
+            <div class="content">
+                <!-- Dashboard Page -->
+                <div id="dashboard-page" class="page">
+                    <div class="page-header">
+                        <div class="page-title">Platform Overview</div>
+                        <div class="page-subtitle">Your comprehensive DevOps platform dashboard</div>
+                    </div>
+                    
+                    <div class="stats-grid" id="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-number" id="components-count">-</div>
+                            <div class="stat-label">Components</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="templates-count">-</div>
+                            <div class="stat-label">Templates</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="systems-count">-</div>
+                            <div class="stat-label">Systems</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="apis-count">-</div>
+                            <div class="stat-label">APIs</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="users-count">-</div>
+                            <div class="stat-label">Users</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="teams-count">-</div>
+                            <div class="stat-label">Teams</div>
+                        </div>
+                    </div>
+                    
+                    <div class="features-grid">
+                        <div class="feature-card">
+                            <div class="material-icons feature-icon">code</div>
+                            <div class="feature-title">GitOps</div>
+                            <div class="feature-description">
+                                Automated deployment and configuration management with ArgoCD
+                            </div>
+                            <a href="https://github.com/DevOpsCanvasIO" target="_blank" class="feature-link">
+                                Open Repository
+                                <span class="material-icons">open_in_new</span>
+                            </a>
+                        </div>
+                        
+                        <div class="feature-card">
+                            <div class="material-icons feature-icon">timeline</div>
+                            <div class="feature-title">Observability</div>
+                            <div class="feature-description">
+                                Comprehensive monitoring, logging, and alerting with Prometheus and Grafana
+                            </div>
+                            <a href="https://grafana.devopscanvas.io" target="_blank" class="feature-link">
+                                Open Grafana
+                                <span class="material-icons">open_in_new</span>
+                            </a>
+                        </div>
+                        
+                        <div class="feature-card">
+                            <div class="material-icons feature-icon">security</div>
+                            <div class="feature-title">Security</div>
+                            <div class="feature-description">
+                                Policy enforcement, vulnerability scanning, and compliance monitoring
+                            </div>
+                            <a href="#security" class="feature-link" onclick="showPage('security')">
+                                View Policies
+                                <span class="material-icons">arrow_forward</span>
+                            </a>
+                        </div>
+                        
+                        <div class="feature-card">
+                            <div class="material-icons feature-icon">account_balance</div>
+                            <div class="feature-title">FinOps</div>
+                            <div class="feature-description">
+                                Cost management, optimization, and financial operations for cloud resources
+                            </div>
+                            <a href="#finops" class="feature-link" onclick="showPage('finops')">
+                                View Costs
+                                <span class="material-icons">arrow_forward</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Golden Paths Page -->
+                <div id="golden-paths-page" class="page hidden">
+                    <div class="page-header">
+                        <div class="page-title">Golden Paths</div>
+                        <div class="page-subtitle">Standardized development workflows with best practices built-in</div>
+                    </div>
+                    
+                    <div class="features-grid" id="golden-paths-grid">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+                
+                <!-- Tech Radar Page -->
+                <div id="tech-radar-page" class="page hidden">
+                    <div class="page-header">
+                        <div class="page-title">Technology Radar</div>
+                        <div class="page-subtitle">Technology adoption and platform standards</div>
+                    </div>
+                    
+                    <div class="table" id="tech-radar-table">
+                        <div class="table-header">Technology Recommendations</div>
+                        <div id="tech-radar-content">
+                            <!-- Will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Service Catalog Page -->
+                <div id="catalog-page" class="page hidden">
+                    <div class="page-header">
+                        <div class="page-title">Service Catalog</div>
+                        <div class="page-subtitle">Discover and explore all services, APIs, and components</div>
+                    </div>
+                    
+                    <div class="table" id="catalog-table">
+                        <div class="table-header">Platform Services</div>
+                        <div id="catalog-content">
+                            <!-- Will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Other pages (placeholder) -->
+                <div id="create-page" class="page hidden">
+                    <div class="page-header">
+                        <div class="page-title">Create Service</div>
+                        <div class="page-subtitle">Use golden path templates to create new services</div>
+                    </div>
+                    <div class="loading">Service creation templates will be available here</div>
+                </div>
+                
+                <div id="api-docs-page" class="page hidden">
+                    <div class="page-header">
+                        <div class="page-title">API Documentation</div>
+                        <div class="page-subtitle">Explore platform APIs and integrations</div>
+                    </div>
+                    <div class="loading">API documentation will be available here</div>
+                </div>
+                
+                <div id="docs-page" class="page hidden">
+                    <div class="page-header">
+                        <div class="page-title">Documentation</div>
+                        <div class="page-subtitle">Platform guides, tutorials, and reference materials</div>
+                    </div>
+                    <div class="loading">Documentation will be available here</div>
+                </div>
+                
+                <div id="security-page" class="page hidden">
+                    <div class="page-header">
+                        <div class="page-title">Security</div>
+                        <div class="page-subtitle">Security policies, compliance, and vulnerability management</div>
+                    </div>
+                    <div class="loading">Security dashboard will be available here</div>
+                </div>
+                
+                <div id="finops-page" class="page hidden">
+                    <div class="page-header">
+                        <div class="page-title">FinOps</div>
+                        <div class="page-subtitle">Cost management and financial operations</div>
+                    </div>
+                    <div class="loading">FinOps dashboard will be available here</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="app.js"></script>
+</body>
+</html>

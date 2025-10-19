@@ -1,6 +1,6 @@
 image:
   repository: jtcrump32msu/devopscanvas-portal
-  tag: backstage-frontend
+  tag: hybrid-frontend
   pullPolicy: Always
 
 service:

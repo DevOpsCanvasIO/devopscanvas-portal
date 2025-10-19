@@ -12,6 +12,11 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
+// Serve the main app for all non-API routes
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 // Load DevOpsCanvas catalog data
 let catalogEntities = [];
 let templateEntities = [];

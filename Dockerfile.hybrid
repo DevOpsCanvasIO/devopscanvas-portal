@@ -1,0 +1,38 @@
+# Hybrid DevOpsCanvas Portal - Enhanced Backend + Static Frontend
+FROM node:20-alpine
+
+# Install system dependencies
+RUN apk add --no-cache curl
+
+# Set working directory
+WORKDIR /app
+
+# Copy enhanced server and dependencies
+COPY src/package.json ./
+COPY src/enhanced-server.js ./
+COPY examples/ ./examples/
+
+# Install dependencies
+RUN npm install --production
+
+# Create static frontend directory
+RUN mkdir -p public
+
+# Copy static frontend files (we'll create these)
+COPY public/ ./public/
+
+# Security: create and use non-root user
+RUN addgroup -g 1001 -S backstage && \
+    adduser -S backstage -u 1001 -G backstage
+RUN chown -R backstage:backstage /app
+USER backstage
+
+# Expose port
+EXPOSE 7007
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:7007/healthcheck || exit 1
+
+# Start the enhanced server
+CMD ["npm", "start"]
