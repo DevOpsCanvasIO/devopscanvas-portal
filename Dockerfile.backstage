@@ -11,7 +11,7 @@ ENV NODE_OPTIONS="--no-node-snapshot"
 
 WORKDIR /app
 
-# Copy package files
+# Copy package files and source code
 COPY package.json yarn.lock ./
 COPY packages packages
 
@@ -19,10 +19,10 @@ COPY packages packages
 RUN corepack enable
 RUN yarn install --frozen-lockfile --network-timeout 300000
 
-# Build packages
+# Build stage - copy remaining source and build
 FROM packages AS build
 
-# Copy source code
+# Copy remaining source files
 COPY . .
 
 # Build the backend and frontend
