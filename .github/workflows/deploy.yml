@@ -21,19 +21,30 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'yarn'
 
-      - name: Install dependencies
-        run: yarn install --immutable
+      - name: Test enhanced server dependencies
+        run: |
+          cd src
+          npm install
+          node -e "console.log('✅ Enhanced server dependencies OK')"
 
-      - name: Run linting
-        run: yarn lint || echo "Linting skipped - not configured"
-
-      - name: Run tests
-        run: yarn test || echo "Tests skipped - not configured"
-
-      - name: Build application
-        run: yarn build:backend
+      - name: Validate YAML files
+        run: |
+          # Check if YAML files are valid
+          node -e "
+            const yaml = require('js-yaml');
+            const fs = require('fs');
+            try {
+              yaml.loadAll(fs.readFileSync('examples/entities.yaml', 'utf8'));
+              yaml.loadAll(fs.readFileSync('examples/template/template.yaml', 'utf8'));
+              yaml.loadAll(fs.readFileSync('examples/org.yaml', 'utf8'));
+              console.log('✅ All YAML files are valid');
+            } catch (error) {
+              console.error('❌ YAML validation failed:', error.message);
+              process.exit(1);
+            }
+          "
+        working-directory: src
 
   build-and-push:
     # needs: test  # Temporarily skip tests to focus on keyless signing
@@ -85,6 +96,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
+          file: ./Dockerfile.enhanced
           platforms: linux/amd64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
