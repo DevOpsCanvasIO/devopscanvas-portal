@@ -21,30 +21,19 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'yarn'
 
-      - name: Test enhanced server dependencies
-        run: |
-          cd src
-          npm install
-          node -e "console.log('✅ Enhanced server dependencies OK')"
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
 
-      - name: Validate YAML files
-        run: |
-          # Check if YAML files are valid
-          cd src
-          node -e "
-            const yaml = require('js-yaml');
-            const fs = require('fs');
-            try {
-              yaml.loadAll(fs.readFileSync('../examples/entities.yaml', 'utf8'));
-              yaml.loadAll(fs.readFileSync('../examples/template/template.yaml', 'utf8'));
-              yaml.loadAll(fs.readFileSync('../examples/org.yaml', 'utf8'));
-              console.log('✅ All YAML files are valid');
-            } catch (error) {
-              console.error('❌ YAML validation failed:', error.message);
-              process.exit(1);
-            }
-          "
+      - name: Type check
+        run: yarn tsc:full
+
+      - name: Lint
+        run: yarn lint:all
+
+      - name: Test build
+        run: yarn build:backend
 
   build-and-push:
     # needs: test  # Temporarily skip tests to focus on keyless signing
@@ -96,7 +85,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./Dockerfile.enhanced
+          file: ./Dockerfile.backstage
           platforms: linux/amd64
           push: true
           tags: ${{ steps.meta.outputs.tags }}

@@ -24,6 +24,11 @@ import { apis } from './apis';
 import { entityPage } from './components/catalog/EntityPage';
 import { searchPage } from './components/search/SearchPage';
 import { Root } from './components/Root';
+import { 
+  DevOpsCanvasDashboard, 
+  GoldenPathsPage, 
+  TechRadarPage 
+} from './components/devopscanvas';
 
 import {
   AlertDisplay,
@@ -64,7 +69,14 @@ const app = createApp({
 
 const routes = (
   <FlatRoutes>
-    <Route path="/" element={<Navigate to="catalog" />} />
+    <Route path="/" element={<Navigate to="devopscanvas-dashboard" />} />
+    
+    {/* DevOpsCanvas-specific routes */}
+    <Route path="/devopscanvas-dashboard" element={<DevOpsCanvasDashboard />} />
+    <Route path="/golden-paths" element={<GoldenPathsPage />} />
+    <Route path="/tech-radar" element={<TechRadarPage />} />
+    
+    {/* Standard Backstage routes */}
     <Route path="/catalog" element={<CatalogIndexPage />} />
     <Route
       path="/catalog/:namespace/:kind/:name"

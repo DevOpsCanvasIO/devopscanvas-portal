@@ -9,6 +9,9 @@ import MonitoringIcon from '@material-ui/icons/Timeline';
 import SecurityIcon from '@material-ui/icons/Security';
 import AccountBalanceIcon from '@material-ui/icons/AccountBalance';
 import GitHubIcon from '@material-ui/icons/GitHub';
+import DashboardIcon from '@material-ui/icons/Dashboard';
+import RouteIcon from '@material-ui/icons/Route';
+import RadarIcon from '@material-ui/icons/Radar';
 import LogoFull from './LogoFull';
 import LogoIcon from './LogoIcon';
 import {
@@ -70,8 +73,15 @@ export const Root = ({ children }: PropsWithChildren<{}>) => (
         <SidebarSearchModal />
       </SidebarGroup>
       <SidebarDivider />
-      <SidebarGroup label="Menu" icon={<MenuIcon />}>
-        {/* Global nav, not org-specific */}
+      <SidebarGroup label="DevOpsCanvas" icon={<DashboardIcon />}>
+        {/* DevOpsCanvas-specific navigation */}
+        <SidebarItem icon={DashboardIcon} to="devopscanvas-dashboard" text="Platform Dashboard" />
+        <SidebarItem icon={RouteIcon} to="golden-paths" text="Golden Paths" />
+        <SidebarItem icon={RadarIcon} to="tech-radar" text="Tech Radar" />
+      </SidebarGroup>
+      <SidebarDivider />
+      <SidebarGroup label="Developer Tools" icon={<MenuIcon />}>
+        {/* Standard Backstage navigation */}
         <SidebarItem icon={HomeIcon} to="catalog" text="Service Catalog" />
         <SidebarItem icon={CreateComponentIcon} to="create" text="Create Service" />
         <SidebarItem icon={ExtensionIcon} to="api-docs" text="APIs" />
@@ -81,30 +91,30 @@ export const Root = ({ children }: PropsWithChildren<{}>) => (
           pluralTitle="My Teams"
           icon={GroupIcon}
         />
-        {/* End global nav */}
-        <SidebarDivider />
-        <SidebarGroup label="DevOpsCanvas Platform" icon={<CloudIcon />}>
-          <SidebarItem 
-            icon={GitHubIcon} 
-            to="https://github.com/DevOpsCanvasIO" 
-            text="GitOps" 
-          />
-          <SidebarItem 
-            icon={MonitoringIcon} 
-            to="https://grafana.devopscanvas.io" 
-            text="Observability" 
-          />
-          <SidebarItem 
-            icon={SecurityIcon} 
-            to="/catalog?filters%5Bkind%5D=component&filters%5Bspec.type%5D=security" 
-            text="Security" 
-          />
-          <SidebarItem 
-            icon={AccountBalanceIcon} 
-            to="/catalog?filters%5Bkind%5D=component&filters%5Bspec.type%5D=finops" 
-            text="FinOps" 
-          />
-        </SidebarGroup>
+      </SidebarGroup>
+      <SidebarDivider />
+      <SidebarGroup label="Platform Services" icon={<CloudIcon />}>
+        <SidebarItem 
+          icon={GitHubIcon} 
+          to="https://github.com/DevOpsCanvasIO" 
+          text="GitOps" 
+        />
+        <SidebarItem 
+          icon={MonitoringIcon} 
+          to="https://grafana.devopscanvas.io" 
+          text="Observability" 
+        />
+        <SidebarItem 
+          icon={SecurityIcon} 
+          to="/catalog?filters%5Bkind%5D=component&filters%5Bspec.type%5D=security" 
+          text="Security" 
+        />
+        <SidebarItem 
+          icon={AccountBalanceIcon} 
+          to="/catalog?filters%5Bkind%5D=component&filters%5Bspec.type%5D=finops" 
+          text="FinOps" 
+        />
+      </SidebarGroup>
         <SidebarDivider />
         <SidebarScrollWrapper>
           {/* Items in this group will be scrollable if they run out of space */}

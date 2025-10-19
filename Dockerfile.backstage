@@ -1,0 +1,67 @@
+# Multi-stage Backstage Build for DevOpsCanvas Portal
+FROM node:20-bookworm-slim as packages
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    python3 g++ build-essential libsqlite3-dev curl git \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV PYTHON=/usr/bin/python3
+ENV NODE_OPTIONS="--no-node-snapshot"
+
+WORKDIR /app
+
+# Copy package files
+COPY package.json yarn.lock ./
+COPY packages packages
+
+# Install dependencies
+RUN yarn install --frozen-lockfile --network-timeout 300000
+
+# Build packages
+FROM packages as build
+
+# Copy source code
+COPY . .
+
+# Build the backend and frontend
+RUN yarn build:backend
+RUN yarn build:app
+
+# Production stage
+FROM node:20-bookworm-slim
+
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y \
+    curl sqlite3 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create app directory
+WORKDIR /app
+
+# Copy built application
+COPY --from=build /app/yarn.lock /app/package.json ./
+COPY --from=build /app/packages/backend/dist/bundle.tar.gz ./
+RUN tar xzf bundle.tar.gz && rm bundle.tar.gz
+
+# Copy frontend build
+COPY --from=build /app/packages/app/dist ./packages/app/dist
+
+# Copy configuration and examples
+COPY app-config*.yaml ./
+COPY examples ./examples
+
+# Security: create and use non-root user
+RUN groupadd -r backstage && useradd -r -g backstage backstage
+RUN chown -R backstage:backstage /app
+USER backstage
+
+# Expose port
+EXPOSE 7007
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:7007/healthcheck || exit 1
+
+# Start Backstage
+CMD ["node", "packages/backend", "--config", "app-config.yaml"]
