@@ -1,6 +1,6 @@
 app:
   title: DevOpsCanvas Developer Portal
-  baseUrl: http://a5b9ac6b6176e464ab1c7e28976cb9ec-405482557.us-east-1.elb.amazonaws.com:7007
+  baseUrl: ${APP_CONFIG_app_baseUrl}
   branding:
     theme:
       light:
@@ -18,14 +18,14 @@ organization:
   name: DevOpsCanvas
 
 backend:
-  baseUrl: http://a5b9ac6b6176e464ab1c7e28976cb9ec-405482557.us-east-1.elb.amazonaws.com:7007
+  baseUrl: ${APP_CONFIG_backend_baseUrl}
   listen:
     port: 7007
     host: 0.0.0.0
   csp:
     connect-src: ["'self'", 'http:', 'https:']
   cors:
-    origin: http://a5b9ac6b6176e464ab1c7e28976cb9ec-405482557.us-east-1.elb.amazonaws.com:7007
+    origin: ${APP_CONFIG_backend_cors_origin}
     methods: [GET, HEAD, PATCH, POST, PUT, DELETE]
     credentials: true
   database:
@@ -80,10 +80,6 @@ catalog:
       target: ../../examples/org.yaml
       rules:
         - allow: [User, Group]
-    
-    # GitHub Integration (when available)
-    # - type: github-discovery
-    #   target: https://github.com/DevOpsCanvasIO/*/blob/main/catalog-info.yaml
 
   processors:
     githubApi:

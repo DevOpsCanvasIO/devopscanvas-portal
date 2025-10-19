@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Page,
   Header,
@@ -10,12 +10,10 @@ import {
 } from '@backstage/core-components';
 import { Grid, Typography, Card, CardContent, Box, Chip } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
-import CloudIcon from '@material-ui/icons/Cloud';
 import TimelineIcon from '@material-ui/icons/Timeline';
 import SecurityIcon from '@material-ui/icons/Security';
 import AccountBalanceIcon from '@material-ui/icons/AccountBalance';
 import GitHubIcon from '@material-ui/icons/GitHub';
-import DashboardIcon from '@material-ui/icons/Dashboard';
 
 const useStyles = makeStyles(theme => ({
   statsCard: {

@@ -1,6 +1,6 @@
 image:
   repository: ghcr.io/devopscanvasio/devopscanvas-portal
-  tag: latest
+  tag: backstage-v2
   pullPolicy: Always
 
 service:
