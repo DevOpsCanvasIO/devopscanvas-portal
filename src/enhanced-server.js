@@ -19,9 +19,9 @@ let orgEntities = [];
 
 try {
   // Load entities from YAML files
-  const entitiesYaml = fs.readFileSync(path.join(__dirname, '../examples/entities.yaml'), 'utf8');
-  const templatesYaml = fs.readFileSync(path.join(__dirname, '../examples/template/template.yaml'), 'utf8');
-  const orgYaml = fs.readFileSync(path.join(__dirname, '../examples/org.yaml'), 'utf8');
+  const entitiesYaml = fs.readFileSync(path.join(__dirname, 'examples/entities.yaml'), 'utf8');
+  const templatesYaml = fs.readFileSync(path.join(__dirname, 'examples/template/template.yaml'), 'utf8');
+  const orgYaml = fs.readFileSync(path.join(__dirname, 'examples/org.yaml'), 'utf8');
   
   // Parse YAML documents
   catalogEntities = yaml.loadAll(entitiesYaml).filter(doc => doc && doc.kind !== 'Template');

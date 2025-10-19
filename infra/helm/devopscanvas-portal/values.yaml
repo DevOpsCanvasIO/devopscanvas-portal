@@ -1,6 +1,6 @@
 image:
   repository: jtcrump32msu/devopscanvas-portal
-  tag: enhanced
+  tag: enhanced-v2
   pullPolicy: Always
 
 service:
