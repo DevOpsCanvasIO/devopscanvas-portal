@@ -1,6 +1,6 @@
 image:
-  repository: jtcrump32msu/devopscanvas-portal
-  tag: hybrid-frontend
+  repository: ghcr.io/devopscanvasio/devopscanvas-portal
+  tag: latest
   pullPolicy: Always
 
 service:
