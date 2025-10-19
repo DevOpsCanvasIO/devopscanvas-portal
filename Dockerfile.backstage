@@ -1,5 +1,5 @@
-# Multi-stage Backstage Build for DevOpsCanvas Portal
-FROM node:20-bookworm-slim AS packages
+# Single-stage Backstage Build for DevOpsCanvas Portal
+FROM node:20-bookworm-slim
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -11,19 +11,14 @@ ENV NODE_OPTIONS="--no-node-snapshot"
 
 WORKDIR /app
 
-# Copy package files and source code
-COPY package.json yarn.lock ./
-COPY packages packages
-
-# Enable Corepack and install dependencies
+# Enable Corepack first
 RUN corepack enable
-RUN yarn install --frozen-lockfile --network-timeout 300000
 
-# Build stage - copy remaining source and build
-FROM packages AS build
-
-# Copy remaining source files
+# Copy all source code
 COPY . .
+
+# Install dependencies
+RUN yarn install --frozen-lockfile --network-timeout 300000
 
 # Build the backend and frontend
 RUN yarn build:backend
