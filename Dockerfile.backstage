@@ -22,7 +22,7 @@ RUN yarn install --frozen-lockfile --network-timeout 300000
 
 # Build the backend and frontend
 RUN yarn build:backend
-RUN yarn build:app
+RUN yarn workspace app build
 
 # Security: create and use non-root user
 RUN groupadd -r backstage && useradd -r -g backstage backstage
