@@ -1,6 +1,6 @@
 image:
   repository: ghcr.io/devopscanvasio/devopscanvas-portal
-  tag: c97086ac1fae1b4ad7b4967df87dec754d36a76a
+  tag: latest
   pullPolicy: Always
 
 service:
