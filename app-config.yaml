@@ -47,8 +47,14 @@ techdocs:
   builder: 'local'
   generator:
     runIn: 'local'
+    dockerImage: 'spotify/techdocs'
+    pullImage: true
   publisher:
     type: 'local'
+    local:
+      publishDirectory: '/tmp/techdocs'
+  cache:
+    ttl: 3600000 # 1 hour
 
 auth:
   providers:
@@ -153,19 +159,7 @@ devopscanvas:
       template: 'devopscanvas-infrastructure'
       technologies: ['terraform', 'aws', 'kubernetes']
 
-# TechDocs configuration for DevOpsCanvas
-techdocs:
-  builder: 'local'
-  generator:
-    runIn: 'local'
-    dockerImage: 'spotify/techdocs'
-    pullImage: true
-  publisher:
-    type: 'local'
-    local:
-      publishDirectory: '/tmp/techdocs'
-  cache:
-    ttl: 3600000 # 1 hour
+
 
 # Search configuration
 search:
