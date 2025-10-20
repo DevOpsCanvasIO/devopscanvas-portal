@@ -69,13 +69,37 @@ jobs:
       with:
         platforms: linux/amd64
 
+    # Login to Docker Hub for pulling base images (to avoid rate limits)
+    - name: Login to Docker Hub for base image pulls
+      run: |
+        if [ -n "${{ secrets.DOCKER_HUB_USERNAME }}" ] && [ -n "${{ secrets.DOCKER_HUB_TOKEN }}" ]; then
+          echo "🔐 Logging into Docker Hub to avoid rate limits..."
+          echo "${{ secrets.DOCKER_HUB_TOKEN }}" | docker login --username "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
+          echo "✅ Docker Hub login successful"
+        else
+          echo "⚠️ Docker Hub credentials not found - using anonymous pulls"
+          echo "💡 Run ./setup-docker-hub-auth.sh to configure authentication and avoid rate limits"
+        fi
+      continue-on-error: true
+
     - name: Determine target registries
       id: registries
+      env:
+        DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
+        DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
       run: |
         if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
           REGISTRIES="${{ github.event.inputs.registries }}"
         else
-          REGISTRIES="ecr,dockerhub,ghcr"
+          # Only include Docker Hub if credentials are available
+          if [ -n "$DOCKER_HUB_USERNAME" ] && [ -n "$DOCKER_HUB_TOKEN" ]; then
+            REGISTRIES="ecr,dockerhub,ghcr"
+            echo "✅ Docker Hub credentials found, including Docker Hub registry"
+          else
+            REGISTRIES="ecr,ghcr"
+            echo "⚠️ Docker Hub credentials not found, skipping Docker Hub registry"
+            echo "💡 Run ./setup-docker-hub-auth.sh to configure Docker Hub authentication"
+          fi
         fi
         echo "registries=$REGISTRIES" >> $GITHUB_OUTPUT
         echo "Target registries: $REGISTRIES"
@@ -109,10 +133,16 @@ jobs:
     # Docker Hub Setup
     - name: Login to Docker Hub
       if: contains(steps.registries.outputs.registries, 'dockerhub')
-      uses: docker/login-action@v3
-      with:
-        username: ${{ secrets.DOCKER_HUB_USERNAME }}
-        password: ${{ secrets.DOCKER_HUB_TOKEN }}
+      run: |
+        if [ -n "${{ secrets.DOCKER_HUB_USERNAME }}" ] && [ -n "${{ secrets.DOCKER_HUB_TOKEN }}" ]; then
+          echo "🔐 Logging into Docker Hub for pushing..."
+          echo "${{ secrets.DOCKER_HUB_TOKEN }}" | docker login --username "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
+          echo "✅ Docker Hub login successful"
+        else
+          echo "❌ Docker Hub credentials required for pushing to Docker Hub"
+          echo "💡 Run ./setup-docker-hub-auth.sh to configure authentication"
+          exit 1
+        fi
 
     # GitHub Container Registry Setup
     - name: Login to GitHub Container Registry
