@@ -62,11 +62,11 @@ jobs:
         echo "📦 Installing dependencies..."
         yarn install --frozen-lockfile
 
-    - name: Build application
+    - name: Prepare for Docker build
       run: |
-        echo "🔨 Building application..."
-        # Only build backend - frontend will be built in Docker
-        yarn build:backend
+        echo "🔨 Preparing for Docker build..."
+        echo "Docker will handle the complete build process"
+        # Skip pre-build steps - let Docker handle everything
 
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
