@@ -28,7 +28,7 @@ on:
 env:
   AWS_REGION: ${{ github.event.inputs.aws_region || 'us-east-1' }}
   ECR_REPOSITORY: devopscanvas-portal
-  DOCKER_HUB_REPOSITORY: devopscanvas/portal
+  DOCKER_HUB_REPOSITORY: jtcrump32msu/devopscanvas-portal
   GHCR_REPOSITORY: devopscanvas-portal
 
 jobs:
