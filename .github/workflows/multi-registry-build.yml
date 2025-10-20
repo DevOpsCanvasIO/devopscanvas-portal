@@ -1,0 +1,208 @@
+name: Multi-Registry Build (ECR + Docker Hub)
+
+on:
+  push:
+    branches: [ main, develop ]
+    tags: [ 'v*' ]
+  workflow_dispatch:
+    inputs:
+      registries:
+        description: 'Target registries'
+        required: true
+        default: 'ecr,dockerhub,ghcr'
+        type: choice
+        options:
+        - ecr
+        - dockerhub
+        - ghcr
+        - ecr,dockerhub
+        - ecr,ghcr
+        - dockerhub,ghcr
+        - ecr,dockerhub,ghcr
+      aws_region:
+        description: 'AWS Region for ECR'
+        required: false
+        default: 'us-east-1'
+        type: string
+
+env:
+  AWS_REGION: ${{ github.event.inputs.aws_region || 'us-east-1' }}
+  ECR_REPOSITORY: devopscanvas-portal
+  DOCKER_HUB_REPOSITORY: devopscanvas/portal
+  GHCR_REPOSITORY: devopscanvas-portal
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    
+    outputs:
+      ecr-image: ${{ steps.images.outputs.ecr-image }}
+      dockerhub-image: ${{ steps.images.outputs.dockerhub-image }}
+      ghcr-image: ${{ steps.images.outputs.ghcr-image }}
+      image-digest: ${{ steps.build.outputs.digest }}
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'yarn'
+
+    - name: Enable Corepack
+      run: corepack enable
+
+    - name: Install dependencies and build
+      run: |
+        echo "📦 Installing dependencies..."
+        yarn install --frozen-lockfile
+        
+        echo "🔨 Building application..."
+        yarn tsc
+        yarn build:backend
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      with:
+        platforms: linux/amd64
+
+    - name: Determine target registries
+      id: registries
+      run: |
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          REGISTRIES="${{ github.event.inputs.registries }}"
+        else
+          REGISTRIES="ecr,dockerhub,ghcr"
+        fi
+        echo "registries=$REGISTRIES" >> $GITHUB_OUTPUT
+        echo "Target registries: $REGISTRIES"
+
+    # ECR Setup
+    - name: Configure AWS credentials
+      if: contains(steps.registries.outputs.registries, 'ecr')
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Login to Amazon ECR
+      if: contains(steps.registries.outputs.registries, 'ecr')
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+
+    # Docker Hub Setup
+    - name: Login to Docker Hub
+      if: contains(steps.registries.outputs.registries, 'dockerhub')
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_HUB_USERNAME }}
+        password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+    # GitHub Container Registry Setup
+    - name: Login to GitHub Container Registry
+      if: contains(steps.registries.outputs.registries, 'ghcr')
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: |
+          ${{ contains(steps.registries.outputs.registries, 'ecr') && format('{0}/{1}', steps.login-ecr.outputs.registry, env.ECR_REPOSITORY) || '' }}
+          ${{ contains(steps.registries.outputs.registries, 'dockerhub') && env.DOCKER_HUB_REPOSITORY || '' }}
+          ${{ contains(steps.registries.outputs.registries, 'ghcr') && format('ghcr.io/{0}/{1}', github.repository_owner, env.GHCR_REPOSITORY) || '' }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=ref,event=tag
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+        labels: |
+          org.opencontainers.image.title=DevOpsCanvas Portal
+          org.opencontainers.image.description=DevOpsCanvas Backstage Developer Portal for AWS
+          org.opencontainers.image.vendor=DevOpsCanvas
+          org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+
+    - name: Build and push Docker images
+      id: build
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile.backstage
+        platforms: linux/amd64
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        provenance: true
+        sbom: true
+
+    - name: Set image outputs
+      id: images
+      run: |
+        if [[ "${{ steps.registries.outputs.registries }}" == *"ecr"* ]]; then
+          ECR_IMAGE="${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest"
+          echo "ecr-image=$ECR_IMAGE" >> $GITHUB_OUTPUT
+        fi
+        
+        if [[ "${{ steps.registries.outputs.registries }}" == *"dockerhub"* ]]; then
+          DOCKERHUB_IMAGE="${{ env.DOCKER_HUB_REPOSITORY }}:latest"
+          echo "dockerhub-image=$DOCKERHUB_IMAGE" >> $GITHUB_OUTPUT
+        fi
+        
+        if [[ "${{ steps.registries.outputs.registries }}" == *"ghcr"* ]]; then
+          GHCR_IMAGE="ghcr.io/${{ github.repository_owner }}/${{ env.GHCR_REPOSITORY }}:latest"
+          echo "ghcr-image=$GHCR_IMAGE" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Run security scan
+      if: contains(steps.registries.outputs.registries, 'ecr')
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: ${{ steps.images.outputs.ecr-image }}
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+
+    - name: Upload security scan results
+      if: contains(steps.registries.outputs.registries, 'ecr')
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+    - name: Generate build summary
+      run: |
+        echo "## Multi-Registry Build Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 📦 Images Built and Pushed" >> $GITHUB_STEP_SUMMARY
+        
+        if [[ "${{ steps.registries.outputs.registries }}" == *"ecr"* ]]; then
+          echo "- **AWS ECR**: \`${{ steps.images.outputs.ecr-image }}\`" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        if [[ "${{ steps.registries.outputs.registries }}" == *"dockerhub"* ]]; then
+          echo "- **Docker Hub**: \`${{ steps.images.outputs.dockerhub-image }}\`" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        if [[ "${{ steps.registries.outputs.registries }}" == *"ghcr"* ]]; then
+          echo "- **GitHub Container Registry**: \`${{ steps.images.outputs.ghcr-image }}\`" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🔧 Build Details" >> $GITHUB_STEP_SUMMARY
+        echo "- **Platform**: linux/amd64" >> $GITHUB_STEP_SUMMARY
+        echo "- **AWS Region**: ${{ env.AWS_REGION }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Target Registries**: ${{ steps.registries.outputs.registries }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Image Digest**: ${{ steps.build.outputs.digest }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Security Scan**: ${{ contains(steps.registries.outputs.registries, 'ecr') && '✅ Completed' || '⏭️ Skipped' }}" >> $GITHUB_STEP_SUMMARY

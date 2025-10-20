@@ -1,0 +1,248 @@
+name: AWS ECR Build & Deploy
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      aws_region:
+        description: 'AWS Region'
+        required: true
+        default: 'us-east-1'
+        type: choice
+        options:
+        - us-east-1
+        - us-west-2
+        - eu-west-1
+        - ap-southeast-1
+      environment:
+        description: 'Deployment Environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+        - development
+        - staging
+        - production
+      force_deploy:
+        description: 'Force ECS deployment'
+        required: false
+        default: true
+        type: boolean
+
+env:
+  AWS_REGION: ${{ github.event.inputs.aws_region || 'us-east-1' }}
+  ECR_REPOSITORY: devopscanvas-portal
+  ECS_CLUSTER: devopscanvas-cluster
+  ECS_SERVICE: devopscanvas-portal-service
+  ENVIRONMENT: ${{ github.event.inputs.environment || 'production' }}
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'yarn'
+
+    - name: Enable Corepack
+      run: corepack enable
+
+    - name: Install dependencies
+      run: |
+        echo "📦 Installing dependencies..."
+        yarn install --frozen-lockfile
+
+    - name: Build application
+      run: |
+        echo "🔨 Building application..."
+        yarn tsc
+        yarn build:backend
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Get AWS Account ID
+      id: aws-account
+      run: |
+        AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+        echo "account-id=$AWS_ACCOUNT_ID" >> $GITHUB_OUTPUT
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      with:
+        platforms: linux/amd64
+
+    - name: Build Docker image
+      run: |
+        echo "🐳 Building Docker image for linux/amd64..."
+        
+        # Build image with proper tagging
+        IMAGE_TAG="${{ env.ENVIRONMENT }}-$(date +%Y%m%d-%H%M%S)-${GITHUB_SHA:0:7}"
+        ECR_URI="${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}"
+        
+        docker buildx build \
+          --platform linux/amd64 \
+          --tag ${{ env.ECR_REPOSITORY }}:$IMAGE_TAG \
+          --tag ${{ env.ECR_REPOSITORY }}:${{ env.ENVIRONMENT }}-latest \
+          --tag $ECR_URI:$IMAGE_TAG \
+          --tag $ECR_URI:${{ env.ENVIRONMENT }}-latest \
+          --load \
+          -f Dockerfile.backstage \
+          .
+        
+        echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+        echo "ECR_URI=$ECR_URI" >> $GITHUB_ENV
+
+    - name: Push to ECR
+      run: |
+        echo "📤 Pushing images to ECR..."
+        docker push ${{ env.ECR_URI }}:${{ env.IMAGE_TAG }}
+        docker push ${{ env.ECR_URI }}:${{ env.ENVIRONMENT }}-latest
+        
+        echo "✅ Images pushed successfully:"
+        echo "   - ${{ env.ECR_URI }}:${{ env.IMAGE_TAG }}"
+        echo "   - ${{ env.ECR_URI }}:${{ env.ENVIRONMENT }}-latest"
+
+    - name: Create new task definition
+      id: task-def
+      run: |
+        echo "📋 Creating new task definition..."
+        
+        # Get current task definition
+        TASK_DEFINITION=$(aws ecs describe-task-definition \
+          --task-definition ${{ env.ECS_SERVICE }} \
+          --query taskDefinition)
+        
+        # Update image URI in task definition
+        NEW_TASK_DEFINITION=$(echo $TASK_DEFINITION | jq --arg IMAGE "${{ env.ECR_URI }}:${{ env.IMAGE_TAG }}" \
+          '.containerDefinitions[0].image = $IMAGE | del(.taskDefinitionArn) | del(.revision) | del(.status) | del(.requiresAttributes) | del(.placementConstraints) | del(.compatibilities) | del(.registeredAt) | del(.registeredBy)')
+        
+        # Register new task definition
+        NEW_TASK_DEF_ARN=$(echo $NEW_TASK_DEFINITION | aws ecs register-task-definition \
+          --cli-input-json file:///dev/stdin \
+          --query 'taskDefinition.taskDefinitionArn' \
+          --output text)
+        
+        echo "task-definition-arn=$NEW_TASK_DEF_ARN" >> $GITHUB_OUTPUT
+        echo "✅ New task definition registered: $NEW_TASK_DEF_ARN"
+
+    - name: Deploy to ECS
+      if: ${{ github.event.inputs.force_deploy == 'true' || github.event_name == 'push' }}
+      run: |
+        echo "🚢 Deploying to ECS..."
+        
+        aws ecs update-service \
+          --cluster ${{ env.ECS_CLUSTER }} \
+          --service ${{ env.ECS_SERVICE }} \
+          --task-definition ${{ steps.task-def.outputs.task-definition-arn }} \
+          --force-new-deployment \
+          --region ${{ env.AWS_REGION }}
+
+    - name: Wait for deployment
+      if: ${{ github.event.inputs.force_deploy == 'true' || github.event_name == 'push' }}
+      run: |
+        echo "⏳ Waiting for deployment to complete..."
+        
+        aws ecs wait services-stable \
+          --cluster ${{ env.ECS_CLUSTER }} \
+          --services ${{ env.ECS_SERVICE }} \
+          --region ${{ env.AWS_REGION }} \
+          --cli-read-timeout 900
+
+    - name: Get deployment status
+      run: |
+        echo "📊 Getting deployment status..."
+        
+        # Get service status
+        SERVICE_STATUS=$(aws ecs describe-services \
+          --cluster ${{ env.ECS_CLUSTER }} \
+          --services ${{ env.ECS_SERVICE }} \
+          --region ${{ env.AWS_REGION }} \
+          --query 'services[0]')
+        
+        RUNNING_COUNT=$(echo $SERVICE_STATUS | jq -r '.runningCount')
+        DESIRED_COUNT=$(echo $SERVICE_STATUS | jq -r '.desiredCount')
+        TASK_DEFINITION=$(echo $SERVICE_STATUS | jq -r '.taskDefinition')
+        
+        echo "Service Status:"
+        echo "  Running Tasks: $RUNNING_COUNT"
+        echo "  Desired Tasks: $DESIRED_COUNT"
+        echo "  Task Definition: $TASK_DEFINITION"
+        
+        # Get load balancer URL
+        ALB_DNS=$(aws elbv2 describe-load-balancers \
+          --names devopscanvas-alb \
+          --region ${{ env.AWS_REGION }} \
+          --query 'LoadBalancers[0].DNSName' \
+          --output text 2>/dev/null || echo "not-found")
+        
+        echo "ALB_DNS=$ALB_DNS" >> $GITHUB_ENV
+
+    - name: Run health check
+      if: env.ALB_DNS != 'not-found'
+      run: |
+        echo "🏥 Running health check..."
+        
+        # Wait a bit for the service to start
+        sleep 30
+        
+        # Check health endpoint
+        for i in {1..10}; do
+          if curl -f -s "http://${{ env.ALB_DNS }}/api/catalog/health" > /dev/null; then
+            echo "✅ Health check passed on attempt $i"
+            break
+          else
+            echo "⏳ Health check failed on attempt $i, retrying in 30s..."
+            sleep 30
+          fi
+        done
+
+    - name: Generate deployment summary
+      run: |
+        echo "## AWS ECR Deployment Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🚀 Deployment Details" >> $GITHUB_STEP_SUMMARY
+        echo "- **Environment**: ${{ env.ENVIRONMENT }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **AWS Region**: ${{ env.AWS_REGION }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **ECS Cluster**: ${{ env.ECS_CLUSTER }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **ECS Service**: ${{ env.ECS_SERVICE }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 📦 Container Image" >> $GITHUB_STEP_SUMMARY
+        echo "- **ECR Repository**: ${{ env.ECR_URI }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Image Tag**: \`${{ env.IMAGE_TAG }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "- **Platform**: linux/amd64" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🌐 Access Information" >> $GITHUB_STEP_SUMMARY
+        if [ "${{ env.ALB_DNS }}" != "not-found" ]; then
+          echo "- **Application URL**: http://${{ env.ALB_DNS }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Health Check**: http://${{ env.ALB_DNS }}/api/catalog/health" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "- **Application URL**: Check AWS Console for Load Balancer DNS" >> $GITHUB_STEP_SUMMARY
+        fi
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### ✅ Status" >> $GITHUB_STEP_SUMMARY
+        echo "- **Build**: ✅ Completed" >> $GITHUB_STEP_SUMMARY
+        echo "- **ECR Push**: ✅ Completed" >> $GITHUB_STEP_SUMMARY
+        if [ "${{ github.event.inputs.force_deploy }}" == "true" ] || [ "${{ github.event_name }}" == "push" ]; then
+          echo "- **ECS Deployment**: ✅ Completed" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "- **ECS Deployment**: ⏭️ Skipped" >> $GITHUB_STEP_SUMMARY
+        fi
