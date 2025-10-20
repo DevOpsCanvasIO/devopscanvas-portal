@@ -340,27 +340,82 @@ jobs:
     # ========================================================================
     # KEYLESS SIGNING (Optional)
     # ========================================================================
+    - name: Validate build outputs
+      if: github.event_name != 'pull_request'
+      run: |
+        echo "🔍 Validating build outputs for signing..."
+        DIGEST="${{ steps.build.outputs.digest }}"
+        echo "Image digest: $DIGEST"
+        echo "Digest length: ${#DIGEST}"
+        
+        if [ -z "$DIGEST" ]; then
+          echo "❌ No image digest available"
+          exit 1
+        fi
+        
+        if [ ${#DIGEST} -lt 64 ]; then
+          echo "❌ Image digest appears truncated: $DIGEST"
+          exit 1
+        fi
+        
+        echo "✅ Build outputs validation passed"
+
     - name: Install Cosign
       if: github.event_name != 'pull_request'
       uses: sigstore/cosign-installer@v3
 
     - name: Sign container images (Keyless)
       if: github.event_name != 'pull_request'
+      continue-on-error: true
       env:
         COSIGN_EXPERIMENTAL: 1
       run: |
         echo "🔐 Signing container images with keyless signatures..."
         
-        if [[ "${{ steps.registries.outputs.registries }}" == *"ghcr"* ]]; then
-          GHCR_IMAGE="ghcr.io/${{ github.repository_owner }}/${{ env.GHCR_REPOSITORY }}@${{ steps.build.outputs.digest }}"
-          cosign sign --yes "$GHCR_IMAGE"
-          echo "✅ Signed GHCR image: $GHCR_IMAGE"
+        # Validate digest format
+        DIGEST="${{ steps.build.outputs.digest }}"
+        echo "📋 Image digest: $DIGEST"
+        
+        if [ -z "$DIGEST" ] || [ ${#DIGEST} -lt 64 ]; then
+          echo "❌ Invalid or missing image digest: $DIGEST"
+          echo "⚠️ Skipping keyless signing due to invalid digest"
+          exit 0
         fi
         
+        # Sign GHCR image
+        if [[ "${{ steps.registries.outputs.registries }}" == *"ghcr"* ]]; then
+          GHCR_IMAGE="ghcr.io/${{ github.repository_owner }}/${{ env.GHCR_REPOSITORY }}@${DIGEST}"
+          echo "🔍 Signing GHCR image: $GHCR_IMAGE"
+          
+          if cosign sign --yes "$GHCR_IMAGE"; then
+            echo "✅ Successfully signed GHCR image"
+          else
+            echo "❌ Failed to sign GHCR image, continuing..."
+          fi
+        fi
+        
+        # Sign ECR image
         if [[ "${{ steps.registries.outputs.registries }}" == *"ecr"* ]]; then
-          ECR_IMAGE="${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}@${{ steps.build.outputs.digest }}"
-          cosign sign --yes "$ECR_IMAGE"
-          echo "✅ Signed ECR image: $ECR_IMAGE"
+          ECR_IMAGE="${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}@${DIGEST}"
+          echo "🔍 Signing ECR image: $ECR_IMAGE"
+          
+          if cosign sign --yes "$ECR_IMAGE"; then
+            echo "✅ Successfully signed ECR image"
+          else
+            echo "❌ Failed to sign ECR image, continuing..."
+          fi
+        fi
+        
+        # Sign Docker Hub image (if available)
+        if [[ "${{ steps.registries.outputs.registries }}" == *"dockerhub"* ]]; then
+          DOCKERHUB_IMAGE="${{ env.DOCKER_HUB_REPOSITORY }}@${DIGEST}"
+          echo "🔍 Signing Docker Hub image: $DOCKERHUB_IMAGE"
+          
+          if cosign sign --yes "$DOCKERHUB_IMAGE"; then
+            echo "✅ Successfully signed Docker Hub image"
+          else
+            echo "❌ Failed to sign Docker Hub image, continuing..."
+          fi
         fi
 
     # ========================================================================
