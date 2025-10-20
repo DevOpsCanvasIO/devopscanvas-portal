@@ -187,17 +187,26 @@ jobs:
       run: |
         if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
           REGISTRIES="${{ github.event.inputs.registries }}"
+          
+          # Validate Docker Hub is available if requested
+          if [[ "$REGISTRIES" == *"dockerhub"* ]]; then
+            if [ -z "$DOCKER_HUB_USERNAME" ] || [ -z "$DOCKER_HUB_TOKEN" ]; then
+              echo "❌ Docker Hub requested but credentials not available"
+              echo "💡 Removing Docker Hub from target registries"
+              REGISTRIES=$(echo "$REGISTRIES" | sed 's/dockerhub,//g' | sed 's/,dockerhub//g' | sed 's/^dockerhub$//g')
+              if [ -z "$REGISTRIES" ]; then
+                REGISTRIES="ecr,ghcr"
+              fi
+            fi
+          fi
         else
           # Auto-determine registries based on event and credentials
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             REGISTRIES="ghcr"  # Only GHCR for PR builds
           else
-            # For push events, include available registries
-            if [ -n "$DOCKER_HUB_USERNAME" ] && [ -n "$DOCKER_HUB_TOKEN" ]; then
-              REGISTRIES="ecr,ghcr,dockerhub"
-            else
-              REGISTRIES="ecr,ghcr"
-            fi
+            # For push events, use ECR and GHCR (Docker Hub optional)
+            # Docker Hub can be added manually via workflow_dispatch if needed
+            REGISTRIES="ecr,ghcr"
           fi
         fi
         
@@ -240,8 +249,17 @@ jobs:
           echo "🔐 Authenticating with Docker Hub for pushing..."
           echo "${{ secrets.DOCKER_HUB_TOKEN }}" | docker login --username "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
           echo "✅ Docker Hub authentication successful"
+          
+          # Verify repository access
+          echo "🔍 Verifying Docker Hub repository access..."
+          if docker pull ${{ env.DOCKER_HUB_REPOSITORY }}:latest 2>/dev/null || echo "Repository may be empty, continuing..."; then
+            echo "✅ Docker Hub repository access verified"
+          else
+            echo "⚠️ Could not verify repository access, but continuing..."
+          fi
         else
-          echo "❌ Docker Hub credentials required for pushing"
+          echo "❌ Docker Hub credentials required for pushing to Docker Hub"
+          echo "💡 Available registries without Docker Hub: ECR, GHCR"
           exit 1
         fi
 
