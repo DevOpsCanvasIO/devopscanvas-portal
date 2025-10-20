@@ -500,22 +500,71 @@ jobs:
         echo "📋 Creating new ECS task definition..."
         
         # Get current task definition
+        echo "🔍 Fetching current task definition..."
         TASK_DEFINITION=$(aws ecs describe-task-definition \
           --task-definition ${{ env.ECS_TASK_DEFINITION }} \
           --query taskDefinition)
         
-        # Update image URI in task definition
-        NEW_TASK_DEFINITION=$(echo $TASK_DEFINITION | jq --arg IMAGE "${{ needs.build-and-push.outputs.ecr-image }}" \
-          '.containerDefinitions[0].image = $IMAGE | del(.taskDefinitionArn) | del(.revision) | del(.status) | del(.requiresAttributes) | del(.placementConstraints) | del(.compatibilities) | del(.registeredAt) | del(.registeredBy)')
+        if [ -z "$TASK_DEFINITION" ] || [ "$TASK_DEFINITION" = "null" ]; then
+          echo "❌ Failed to fetch task definition"
+          exit 1
+        fi
+        
+        echo "✅ Current task definition fetched"
+        
+        # Validate ECR image
+        ECR_IMAGE="${{ needs.build-and-push.outputs.ecr-image }}"
+        if [ -z "$ECR_IMAGE" ]; then
+          echo "❌ No ECR image available for deployment"
+          exit 1
+        fi
+        
+        echo "🔍 Updating task definition with new image: $ECR_IMAGE"
+        
+        # Update image URI in task definition and clean up fields
+        NEW_TASK_DEFINITION=$(echo "$TASK_DEFINITION" | jq --arg IMAGE "$ECR_IMAGE" \
+          '.containerDefinitions[0].image = $IMAGE | 
+           del(.taskDefinitionArn) | 
+           del(.revision) | 
+           del(.status) | 
+           del(.requiresAttributes) | 
+           del(.placementConstraints) | 
+           del(.compatibilities) | 
+           del(.registeredAt) | 
+           del(.registeredBy)')
+        
+        # Validate the new task definition JSON
+        if ! echo "$NEW_TASK_DEFINITION" | jq empty 2>/dev/null; then
+          echo "❌ Generated task definition is not valid JSON"
+          echo "Task definition content:"
+          echo "$NEW_TASK_DEFINITION"
+          exit 1
+        fi
+        
+        echo "✅ Task definition JSON validated"
+        
+        # Save to temporary file for better error handling
+        echo "$NEW_TASK_DEFINITION" > /tmp/task-definition.json
         
         # Register new task definition
-        NEW_TASK_DEF_ARN=$(echo $NEW_TASK_DEFINITION | aws ecs register-task-definition \
-          --cli-input-json file:///dev/stdin \
+        echo "🚀 Registering new task definition..."
+        NEW_TASK_DEF_ARN=$(aws ecs register-task-definition \
+          --cli-input-json file:///tmp/task-definition.json \
           --query 'taskDefinition.taskDefinitionArn' \
           --output text)
         
+        if [ -z "$NEW_TASK_DEF_ARN" ] || [ "$NEW_TASK_DEF_ARN" = "None" ]; then
+          echo "❌ Failed to register new task definition"
+          echo "Task definition file content:"
+          cat /tmp/task-definition.json
+          exit 1
+        fi
+        
         echo "task-definition-arn=$NEW_TASK_DEF_ARN" >> $GITHUB_OUTPUT
         echo "✅ New task definition registered: $NEW_TASK_DEF_ARN"
+        
+        # Cleanup
+        rm -f /tmp/task-definition.json
 
     - name: Deploy to ECS
       run: |
