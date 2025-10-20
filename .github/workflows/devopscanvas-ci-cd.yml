@@ -65,7 +65,7 @@ env:
   # Registry Configuration
   AWS_REGION: ${{ github.event.inputs.aws_region || 'us-east-1' }}
   ECR_REPOSITORY: devopscanvas-portal
-  DOCKER_HUB_REPOSITORY: jtcrump32msu/devopscanvas-portal
+  DOCKER_HUB_REPOSITORY: jtcrump32/devopscanvas-portal
   GHCR_REPOSITORY: devopscanvas-portal
   
   # AWS ECS Configuration
